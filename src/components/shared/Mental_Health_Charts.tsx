@@ -40,34 +40,7 @@ const MentalHealthChart = () => {
         pointColor="#8884d8"
         pointBorderWidth={2}
         curve='natural'
-        legends={
-          [
-            {
-              anchor: "bottom",
-              direction: "row",
-              justify: false,
-              translateX: 0,
-              translateY: 40,
-              itemsSpacing: 0,
-              itemDirection: "left-to-right",
-              itemWidth: 80,
-              itemHeight: 20,
-              itemOpacity: 0.75,
-              symbolSize: 12,
-              symbolShape: "circle",
-              symbolBorderColor: "rgba(0, 0, 0, .5)",
-              effects: [
-                {
-                  on: "hover",
-                  style: {
-                    itemBackground: "rgba(0, 0, 0, .03)",
-                    itemOpacity: 1,
-                  },
-                },
-              ],
-            },
-          ]
-        }
+        
         enableGridX={false}
         enableGridY={true}
         enableArea={true} // ✅ Enables the gradient area
