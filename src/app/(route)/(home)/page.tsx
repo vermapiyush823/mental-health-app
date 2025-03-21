@@ -6,7 +6,7 @@ import React from 'react'
 
 const Page = () => {
   return (
-    <div className="flex flex-col mt-8 gap-y-5 w-full items-center">
+    <div className="flex flex-col mt-8 mb-8 gap-y-5 w-full items-center">
       <Dashboard_profile />
       <div className="w-[95%] grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className='col-span-1 sm:col-span-2  w-full'>

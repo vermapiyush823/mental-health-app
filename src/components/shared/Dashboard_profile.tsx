@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 const Dashboard_profile = () => {
   return (
-    <div className="flex flex-col md:flex-row justify-between bg-white w-[95%] rounded-md p-5 items-center md:items-start gap-4">
+    <div className="flex flex-col shadow-md md:flex-row justify-between bg-white w-[95%] rounded-md p-5 items-center md:items-start gap-4">
       {/* Profile Section */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 w-full md:w-1/2">
         <img 

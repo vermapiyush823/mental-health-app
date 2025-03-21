@@ -9,7 +9,7 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="flex border-b bg-white border-gray-300 items-center h-16 justify-between px-6 w-full">
+    <nav className="flex border-b bg-white  border-gray-300 items-center h-16 justify-between px-6 w-full">
       {/* Left Side: Logo & Navigation */}
       <div className="flex items-center gap-x-4 sm:gap-x-10 h-full">
         <h3 className="text-lg font-bold text-indigo-600">
@@ -27,7 +27,7 @@ const Header = () => {
             <Link href="/">Home</Link>
           </li>
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-            <Link href="/overview">Overview</Link>
+            <Link href="/mood-track">Mood Tracker</Link>
           </li>
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
             <Link href="/resources">Resources</Link>

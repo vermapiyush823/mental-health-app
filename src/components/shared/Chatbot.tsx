@@ -45,13 +45,14 @@ const Chatbot = () => {
       const prompt = `You are a supportive mental health chatbot. Your role is to:
       1. Provide emotional support and understanding
       2. Listen and respond with empathy
-      3. If you detect signs of serious distress, depression, or harmful thoughts, gently suggest speaking with a mental health professional
+      3. If you detect signs of serious distress, depression, or harmful thoughts, gently suggest speaking with someone from the user's professional support network(available in the sidebar of this page)
       4. Stay focused on mental health and emotional well-being topics
       5. Never provide medical advice or diagnoses
       6. Be encouraging and positive while acknowledging feelings
       7. The user may share personal experiences, thoughts, or feelings
       8. The user will be from India
       9. Output should not be more than 90 words.
+      10. The user may chat in English or Hindi so you should give answers in the same language.
 
       Previous conversation: ${JSON.stringify(messages)}
       User's message: ${input}
@@ -75,7 +76,7 @@ const Chatbot = () => {
   };
 
   return (
-    <div className="flex flex-col h-[80vh] sm:h-[60vh] bg-white gap-y-4 sm:py-4 sm:px-8 py-2 px-4 rounded-md">
+    <div className="flex flex-col h-[80vh] sm:h-full bg-white gap-y-4 shadow-md sm:py-6 sm:px-8 py-2 px-4 rounded-md">
       <h1 className="text-md font-semibold bg-white">AI Chat Assistant</h1>
 
       <div className="flex-1 overflow-y-scroll p-4 bg-gray-100 space-y-4 rounded-md">
