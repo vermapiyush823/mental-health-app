@@ -1,7 +1,7 @@
 import React from 'react'
 import Edit_icon from '../../../assets/icons/Edit.svg'
 import Image from 'next/image'
-
+import Link from 'next/link'
 const Dashboard_profile = () => {
   return (
     <div className="flex flex-col md:flex-row justify-between bg-white w-[95%] rounded-md p-5 items-center md:items-start gap-4">
@@ -23,10 +23,12 @@ const Dashboard_profile = () => {
 
       {/* Edit Profile Button */}
       <div className="w-full md:w-auto flex justify-center md:justify-end">
-        <button className="bg-gray-200 flex items-center gap-x-2 text-black px-4 py-2 rounded-md">
+        <Link className="bg-gray-200 flex items-center gap-x-2 text-black px-4 py-2 rounded-md"
+          href="/profile"
+        >
           <Image src={Edit_icon} alt="edit" width={18} height={18} />
           <span className="text-sm">Edit Profile</span>
-        </button>
+        </Link>
       </div>
     </div>
   )

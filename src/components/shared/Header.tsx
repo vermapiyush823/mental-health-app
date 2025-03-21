@@ -4,7 +4,7 @@ import Bell from "../../../assets/icons/Bell.svg";
 import Image from "next/image";
 import MenuIcon from "../../../assets/icons/burger-menu-svgrepo-com.svg";
 import CloseIcon from "../../../assets/icons/cross-svgrepo-com.svg";
-
+import Link from "next/link";
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -24,16 +24,16 @@ const Header = () => {
           }`}
         >
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-            Dashboard
+            <Link href="/">Home</Link>
           </li>
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-            Track Mood
+            <Link href="/overview">Overview</Link>
           </li>
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-            Resources
+            <Link href="/resources">Resources</Link>
           </li>
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-            Support
+            <Link href="/support">Support</Link>
           </li>
         </ul>
       </div>
@@ -44,12 +44,13 @@ const Header = () => {
           <Image src={Bell} alt="bell" width={18} height={18} />
           <span>Notifications</span>
         </button>
-        <img
+          <Link href="/profile">
+          <img
           src="https://randomuser.me/api/portraits/men/1.jpg"
           alt="Profile"
           className="w-8 h-8 rounded-full"
         />
-
+        </Link> 
         {/* Mobile Menu Button (Hidden on Large Screens) */}
         <button
           className="sm:hidden text-gray-700"
