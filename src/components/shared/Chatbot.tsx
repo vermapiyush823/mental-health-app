@@ -75,7 +75,7 @@ const Chatbot = () => {
   };
 
   return (
-    <div className="flex flex-col h-[60vh] bg-white gap-y-4 sm:py-4 sm:px-8 py-2 px-4 rounded-md">
+    <div className="flex flex-col h-[80vh] sm:h-[60vh] bg-white gap-y-4 sm:py-4 sm:px-8 py-2 px-4 rounded-md">
       <h1 className="text-md font-semibold bg-white">AI Chat Assistant</h1>
 
       <div className="flex-1 overflow-y-scroll p-4 bg-gray-100 space-y-4 rounded-md">
