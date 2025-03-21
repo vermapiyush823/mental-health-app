@@ -5,7 +5,7 @@ import Overview_single_score from './Overview_single_score'
 import Ai_insights from './Ai_insights'
 const Overview = () => {
   return (
-    <div className='flex flex-col gap-y-5 bg-white h-fit w-full sm:w-2/3 rounded-md p-5'>
+    <div className='flex flex-col gap-y-5 bg-white h-fit  rounded-md p-5'>
         <h1 className='text-lg font-bold'>Mental Health Overview</h1>
         <MentalHealthChart/>
         <div className='grid justify-center items-center gap-5 grid-cols-2 sm:grid-cols-3  w-full'>
