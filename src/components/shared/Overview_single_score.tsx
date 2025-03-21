@@ -9,7 +9,7 @@ const overview_single_score = (
     {catgory, score}: Props
 ) => {
   return (
-    <div className='flex flex-col bg-black/15 p-4 w-1/3 rounded-lg'>
+    <div className='flex flex-col bg-black/15 p-4 rounded-lg '>
         <p className='text-sm text-gray-500 '>{catgory}</p>
         <p className='text-lg font-bold'>
             {

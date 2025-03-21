@@ -5,10 +5,10 @@ import Overview_single_score from './Overview_single_score'
 import Ai_insights from './Ai_insights'
 const Overview = () => {
   return (
-    <div className='flex flex-col gap-y-5 bg-white h-fit  w-2/3 rounded-md p-5'>
+    <div className='flex flex-col gap-y-5 bg-white h-fit w-full sm:w-2/3 rounded-md p-5'>
         <h1 className='text-lg font-bold'>Mental Health Overview</h1>
         <MentalHealthChart/>
-        <div className='flex justify-between gap-x-5 w-full'>
+        <div className='grid justify-center items-center gap-5 grid-cols-2 sm:grid-cols-3  w-full'>
             <Overview_single_score catgory='Weekly Mood Score' score='7'/>
             <Overview_single_score catgory='Sleep Quality' score='8'/>
             <Overview_single_score catgory='Stress Level' score='Low'/>

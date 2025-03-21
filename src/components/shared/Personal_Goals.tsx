@@ -36,7 +36,7 @@ const PersonalGoals = () => {
   };
 
   return (
-    <div className="flex flex-col gap-y-5 bg-white h-fit w-1/3 rounded-md p-5 shadow-md">
+    <div className="flex flex-col gap-y-5 bg-white h-fit w-full sm:w-1/3 rounded-md p-5 shadow-md">
       {/* Title */}
       <h1 className="text-lg font-bold">Personal Goals</h1>
       {

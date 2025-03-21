@@ -1,4 +1,6 @@
-import { ResponsiveLine } from '@nivo/line';
+"use client";
+import React, { useState, useEffect } from "react";
+import { ResponsiveLine } from "@nivo/line";
 
 const data = [
   {
@@ -17,8 +19,21 @@ const data = [
 ];
 
 const MentalHealthChart = () => {
+  const [chartHeight, setChartHeight] = useState(300); // Default height
+
+  useEffect(() => {
+    const handleResize = () => {
+      setChartHeight(window.innerWidth < 768 ? 200 : 300); // Smaller chart for mobile
+    };
+
+    handleResize(); // Call on mount
+    window.addEventListener("resize", handleResize); // Listen to resize events
+
+    return () => window.removeEventListener("resize", handleResize); // Cleanup
+  }, []);
+
   return (
-    <div style={{ height: 300 }}>
+    <div style={{ height: chartHeight, width: "100%" }}>
       <ResponsiveLine
         data={data}
         margin={{ top: 20, right: 20, bottom: 50, left: 40 }}
@@ -29,9 +44,9 @@ const MentalHealthChart = () => {
           tickPadding: 10,
         }}
         axisLeft={{
-          tickSize: 0, // ✅ Removes the side Y-axis line
+          tickSize: 0,
           tickPadding: 10,
-          tickValues: [0, 2, 4, 6, 8, 10], // ✅ Show only 0, 2, 4, 6, 8, 10
+          tickValues: [0, 2, 4, 6, 8, 10],
         }}
         colors={["#8884d8"]}
         lineWidth={3}
@@ -39,11 +54,10 @@ const MentalHealthChart = () => {
         pointSize={8}
         pointColor="#8884d8"
         pointBorderWidth={2}
-        curve='natural'
-        
+        curve="natural"
         enableGridX={false}
         enableGridY={true}
-        enableArea={true} // ✅ Enables the gradient area
+        enableArea={true}
         areaOpacity={0.5}
         useMesh={true}
         defs={[
@@ -56,7 +70,7 @@ const MentalHealthChart = () => {
             ],
           },
         ]}
-        fill={[{ match: "*", id: "gradient" }]} // ✅ Applies gradient
+        fill={[{ match: "*", id: "gradient" }]}
       />
     </div>
   );
