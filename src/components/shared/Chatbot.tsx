@@ -27,11 +27,16 @@ const Chatbot = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
   useEffect(() => {
+    if (isFirstRender) {
+      setIsFirstRender(false);
+      return;
+    }
     scrollToBottom();
   }, [messages]);
-
+  
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -76,7 +81,7 @@ const Chatbot = () => {
   };
 
   return (
-    <div className="flex flex-col h-[80vh] sm:h-full bg-white gap-y-4 shadow-md sm:py-6 sm:px-8 py-2 px-4 rounded-md">
+    <div className="flex flex-col h-[80vh] sm:h-[81.9vh] bg-white gap-y-4 shadow-md sm:py-6 sm:px-8 py-2 px-4 rounded-md">
       <h1 className="text-md font-semibold bg-white">AI Chat Assistant</h1>
 
       <div className="flex-1 overflow-y-scroll p-4 bg-gray-100 space-y-4 rounded-md">

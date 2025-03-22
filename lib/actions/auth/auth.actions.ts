@@ -73,3 +73,5 @@ export async function signUp(name: string, email: string, password: string,age:N
     throw new Error(`Failed to sign up: ${error.message}`);
   }
 }
+
+

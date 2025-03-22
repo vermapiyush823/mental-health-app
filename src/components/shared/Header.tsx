@@ -5,9 +5,31 @@ import Image from "next/image";
 import MenuIcon from "../../../assets/icons/burger-menu-svgrepo-com.svg";
 import CloseIcon from "../../../assets/icons/cross-svgrepo-com.svg";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [error,setError] = useState('');
+  const router = useRouter();
+  const logout = async()=>{
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Something went wrong");
+        return;
+      }else{
+        router.push('/sign-in');
+      }
+    } catch (err) {
+      console.error("Error during sign-up:", err);
+    }
+  }
   return (
     <nav className="flex border-b bg-white  border-gray-300 items-center h-16 justify-between px-6 w-full">
       {/* Left Side: Logo & Navigation */}
@@ -35,6 +57,13 @@ const Header = () => {
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
             <Link href="/support">Support</Link>
           </li>
+          <li>
+          <button type="button"
+          onClick={()=>logout()}
+        className="hover:text-black sm:hidden text-purple-700 cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
+          Logout
+        </button>
+          </li>
         </ul>
       </div>
 
@@ -48,10 +77,15 @@ const Header = () => {
           <img
           src="https://randomuser.me/api/portraits/men/1.jpg"
           alt="Profile"
-          className="w-8 h-8 rounded-full"
+          className="w-10 h-10 rounded-full"
         />
         </Link> 
         {/* Mobile Menu Button (Hidden on Large Screens) */}
+        <button type="button"
+          onClick={()=>logout()}
+        className="bg-black text-white px-4 py-2 rounded-lg sm:flex hidden">
+          Logout
+        </button>
         <button
           className="sm:hidden text-gray-700"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -64,6 +98,7 @@ const Header = () => {
           />
           {}
         </button>
+   
       </div>
     </nav>
   );
