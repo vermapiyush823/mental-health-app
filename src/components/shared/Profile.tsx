@@ -63,7 +63,7 @@ const Profile = ({userId}:ProfileProps) => {
                 throw new Error(errorData.message || "Error updating profile picture");
             }
         } catch (error) {
-            console.error("Failed to update profile picture", error);
+            console.error("Failed to update profile picture ", error);
         }
     };
       
