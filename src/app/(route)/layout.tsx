@@ -1,12 +1,14 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Header from "@/components/shared/Header";
+import { getUserId } from "@/lib/auth";
 
 export default async function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const userId = await getUserId();
   // Check if the "token" cookie exists
   const cookieStore = await cookies();
   const token = cookieStore.get("token");
@@ -18,7 +20,9 @@ export default async function Layout({
 
   return (
     <main className="">
-      <Header />
+      <Header 
+        userId={userId}
+      />
       <section className="">
         <div>{children}</div>
       </section>

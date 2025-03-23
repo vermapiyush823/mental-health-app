@@ -1,10 +1,9 @@
 "use server";
 import Profile from "@/components/shared/Profile";
-import { cookies } from "next/headers";
+import { getUserId } from "@/lib/auth";
 
 const ProfilePage = async () => {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value || ""; // Get value safely
+  const userId = await getUserId();
   console.log(userId);
   return <Profile userId={userId} />;
 };

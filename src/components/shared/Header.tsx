@@ -1,14 +1,47 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Bell from "../../../assets/icons/Bell.svg";
 import Image from "next/image";
 import MenuIcon from "../../../assets/icons/burger-menu-svgrepo-com.svg";
 import CloseIcon from "../../../assets/icons/cross-svgrepo-com.svg";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-const Header = () => {
+  interface HeaderProps {
+    userId: string;
+  }
+const Header = (
+  { userId }: HeaderProps
+) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [newImg,setNewImg] = useState('https://api.dicebear.com/6.x/avataaars/svg');
   const [error,setError] = useState('');
+   
+      const fetchUserDetails = async () => {
+          try{
+              const response = await fetch("/api/get/user", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ userId }),
+                });
+                
+                  if (!response.ok) {
+                      const errorData = await response.json();
+                      console.error("Error:", errorData.message);
+                      return;
+                  }
+                  const userData = await response.json();
+                  setNewImg(userData.user.data.image);
+          }
+          catch(err){
+              console.error("Error during fetching user details", err);
+          }
+      }
+      // Fetch user details on initial render
+      useEffect(() => {
+          fetchUserDetails();
+      }, []);
   const router = useRouter();
   const logout = async()=>{
     try {
@@ -75,9 +108,9 @@ const Header = () => {
         </button>
           <Link href="/profile">
           <img
-          src="https://randomuser.me/api/portraits/men/1.jpg"
+          src={newImg}
           alt="Profile"
-          className="w-10 h-10 rounded-full"
+          className="w-10 h-10 rounded-full object-cover"
         />
         </Link> 
         {/* Mobile Menu Button (Hidden on Large Screens) */}

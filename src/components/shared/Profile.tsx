@@ -79,9 +79,11 @@ const Profile = ({userId}:ProfileProps) => {
     const [name, setName] = useState("John Doe");      
     const [todayMoodScore, setTodayMoodScore] = useState(7);
     const [todayMoodLabel, setTodayMoodLabel] = useState("Good");
+    const [loading, setLoading] = useState(true);
     
     const fetchUserDetails = async () => {
         try{
+            setLoading(true);
             const response = await fetch("/api/get/user", {
                 method: "POST",
                 headers: {
@@ -117,12 +119,12 @@ const Profile = ({userId}:ProfileProps) => {
                   if (lastMood) {
                     setTodayMoodScore(lastMood?.score);
                     setTodayMoodLabel(moodLabels[lastMood?.score]);
-
                 } 
-                  
+                setLoading(false);
         }
         catch(err){
             console.error("Error during fetching user details", err);
+            setLoading(false);
         }
     }
     // Fetch user details on initial render
@@ -155,27 +157,41 @@ const Profile = ({userId}:ProfileProps) => {
    };
 
    return (
-     <div className="min-h-screen bg-gray-100 p-6">
+     <div className="min-h-screen bg-gray-100 p-2">
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
          {/* Left Section: Profile Details */}
          <div className="lg:col-span-2 bg-white shadow-lg rounded-lg p-6">
            {/* Profile Header */}
            <div className="flex flex-col sm:flex-row items-center gap-6">
-  <img
-    src={newImg}
-    alt="User Profile"
-    className="w-32 h-32 rounded-full shadow-md"
-  />
+  {loading ? (
+    <div className="w-32 h-32 rounded-full bg-gray-300 animate-pulse"></div>
+  ) : (
+    <img
+      src={newImg}
+      alt="User Profile"
+      className="w-32 h-32 rounded-full shadow-md"
+    />
+  )}
   <div className="text-center sm:text-left">
-    <h2 className="text-3xl font-bold">{name}</h2>
-    <p className="text-gray-600">Member since {memberDate}</p>
-    <p
-      className={`text-sm font-bold rounded-xl py-1 px-2 mt-2 inline-block ${
-        moodStyles[todayMoodScore] || "text-gray-700 bg-gray-200"
-      }`}
-    >
-      Feeling {todayMoodLabel} Today
-    </p>
+    {loading ? (
+      <div className="animate-pulse space-y-3">
+        <div className="h-8 bg-gray-300 rounded-md w-48"></div>
+        <div className="h-4 bg-gray-300 rounded-md w-32"></div>
+        <div className="h-6 bg-gray-300 rounded-md w-24"></div>
+      </div>
+    ) : (
+      <>
+        <h2 className="text-3xl font-bold">{name}</h2>
+        <p className="text-gray-600">Member since {memberDate}</p>
+        <p
+          className={`text-sm font-bold rounded-xl py-1 px-2 mt-2 inline-block ${
+            moodStyles[todayMoodScore] || "text-gray-700 bg-gray-200"
+          }`}
+        >
+          Feeling {todayMoodLabel} Today
+        </p>
+      </>
+    )}
     <div className="mt-4">
       <input
         type="file"
@@ -192,7 +208,7 @@ const Profile = ({userId}:ProfileProps) => {
       </label>
       <button
         onClick={handleProfilePictureUpdate}
-        className="ml-4  text-black border-black border-2 px-4 py-2 rounded-lg"
+        className="ml-4 text-black border-black border-2 px-4 py-2 rounded-lg"
       >
         Upload
       </button>
@@ -208,7 +224,9 @@ const Profile = ({userId}:ProfileProps) => {
                  <tr>
                    <td className="p-3 font-bold">Email:</td>
                    <td className="p-3">
-                     {enableEdit ? (
+                     {loading ? (
+                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-3/4"></div>
+                     ) : enableEdit ? (
                        <input
                          type="email"
                          value={email}
@@ -223,7 +241,9 @@ const Profile = ({userId}:ProfileProps) => {
                  <tr className="">
                    <td className="p-3 font-bold">Phone:</td>
                    <td className="p-3">
-                     {enableEdit ? (
+                     {loading ? (
+                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-3/4"></div>
+                     ) : enableEdit ? (
                        <input
                          type="text"
                          value={phone}
@@ -238,7 +258,9 @@ const Profile = ({userId}:ProfileProps) => {
                  <tr>
                    <td className="p-3 font-bold">Location:</td>
                    <td className="p-3">
-                     {enableEdit ? (
+                     {loading ? (
+                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-3/4"></div>
+                     ) : enableEdit ? (
                        <input
                          type="text"
                          value={location}
@@ -253,7 +275,9 @@ const Profile = ({userId}:ProfileProps) => {
                  <tr>
                    <td className="p-3 font-bold">Age:</td>
                    <td className="p-3">
-                     {enableEdit ? (
+                     {loading ? (
+                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-16"></div>
+                     ) : enableEdit ? (
                        <input
                          type="number"
                          value={age}
@@ -270,7 +294,9 @@ const Profile = ({userId}:ProfileProps) => {
                  <tr>
                    <td className="p-3 font-bold">Gender:</td>
                    <td className="p-3">
-                     {enableEdit ? (
+                     {loading ? (
+                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-32"></div>
+                     ) : enableEdit ? (
                        <select
                         title='gender'
                          value={gender}
