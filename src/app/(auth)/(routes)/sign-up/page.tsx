@@ -12,18 +12,20 @@ const SignUpPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setIsLoading(true);
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
+      setIsLoading(false);
       return;
     }
-    
 
     try {
       const response = await fetch("/api/auth/signup", {
@@ -37,16 +39,19 @@ const SignUpPage = () => {
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Something went wrong");
+        setIsLoading(false);
         return;
       }
 
       const data = await response.json();
       console.log("Sign-up successful:", data);
-      router.push('/');
+      router.push('/sign-in');
       setSuccess("Account created successfully! You can now sign in.");
     } catch (err) {
       console.error("Error during sign-up:", err);
       setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -67,6 +72,7 @@ const SignUpPage = () => {
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Enter your full name"
               required
+              disabled={isLoading}
             />
           </div>
           <div className="mb-4">
@@ -78,6 +84,7 @@ const SignUpPage = () => {
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Enter your email"
               required
+              disabled={isLoading}
             />
           </div>
           <div className="mb-4">
@@ -90,6 +97,7 @@ const SignUpPage = () => {
               placeholder="Enter your age"
               min={1}
               required
+              disabled={isLoading}
             />
           </div>
           <div className="mb-4">
@@ -100,6 +108,7 @@ const SignUpPage = () => {
               onChange={(e) => setGender(e.target.value)}
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               required
+              disabled={isLoading}
             >
               <option value="">Select Gender</option>
               <option value="Male">Male</option>
@@ -116,6 +125,7 @@ const SignUpPage = () => {
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Enter your password"
               required
+              disabled={isLoading}
             />
           </div>
           <div className="mb-6">
@@ -127,15 +137,24 @@ const SignUpPage = () => {
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Confirm your password"
               required
+              disabled={isLoading}
             />
           </div>
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
           {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
           <button
             type="submit"
-            className="w-full bg-black text-white py-2 rounded-lg hover:opacity-90"
+            className="w-full bg-black text-white py-2 rounded-lg hover:opacity-90 flex items-center justify-center"
+            disabled={isLoading}
           >
-            Create Account
+            {isLoading ? (
+              <>
+                <div className="h-4 w-4 mr-2 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                Creating account...
+              </>
+            ) : (
+              "Sign Up"
+            )}
           </button>
         </form>
         <p className="text-center text-sm text-gray-600 mt-4">

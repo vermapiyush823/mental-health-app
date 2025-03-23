@@ -10,10 +10,12 @@ const SignInPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(""); // Clear previous errors
+    setIsLoading(true); // Start loading state
 
     try {
       const response = await fetch("/api/auth/signin", {
@@ -32,6 +34,8 @@ const SignInPage = () => {
     } catch (err: any) {
       console.error("Sign-in error:", err);
       setError(err.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false); // End loading state regardless of outcome
     }
   };
 
@@ -53,6 +57,7 @@ const SignInPage = () => {
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Enter your email"
               required
+              disabled={isLoading}
             />
           </div>
           <div className="mb-6">
@@ -64,14 +69,23 @@ const SignInPage = () => {
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Enter your password"
               required
+              disabled={isLoading}
             />
           </div>
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-black text-white py-2 rounded-lg hover:opacity-90"
+            className="w-full bg-black text-white py-2 rounded-lg hover:opacity-90 flex items-center justify-center"
+            disabled={isLoading}
           >
-            Sign In
+            {isLoading ? (
+              <>
+                <div className="h-4 w-4 mr-2 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
         <p className="text-center text-sm text-gray-600 mt-4">
