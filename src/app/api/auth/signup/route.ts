@@ -30,7 +30,12 @@ export async function POST(req: NextRequest) {
       maxAge: 86400, // 1 day
     },
   )
-
+  response.cookies.set("userId", user.id.toString(), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 86400, // 1 day
+  });
     return response;
   } catch (error: any) {
     return NextResponse.json(

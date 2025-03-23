@@ -15,6 +15,13 @@ export async function POST() {
       path: "/",
     });
 
+       // Set HTTP-only cookie for user_id
+       response.cookies.set("user_id", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 1, // 1 day
+      });
     return response;
   } catch (error) {
     return NextResponse.json(
