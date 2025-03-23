@@ -2,28 +2,74 @@ import { connectToDatabase } from "../mongoose";
 import User from "../../database/models/user";
 
 export async function updateProfile(
-        user:string,email:string,phone:string,location:string
+        userId: string,
+        email: string,
+        phone: string,
+        location: string,
+        gender:string,
+        age:string,
 ){
     try {
         await connectToDatabase();
-
-        // Find and update user
-        const updatedUser = await User.findOneAndUpdate(
-            { _id: user },
-            {
+        
+        // Ensure phone is properly formatted and not undefined
+        const formattedPhone = phone?.trim() || '';
+        
+        console.log('Updating user with phone:', formattedPhone);
+        
+        // Use $set to ensure fields are properly updated
+        const updatePayload = {
+            $set: {
                 email,
-                phone,
-                location
-            },
-            { new: true }
-        );
+                phone: formattedPhone,
+                location,
+                gender,
+                age
+            }
+        };
+        
+        console.log('Update payload:', updatePayload);
+        
+        const updatedUser = await User.findOne({ _id: userId });
+        updatedUser.email = email;
+        updatedUser.phone = formattedPhone;
+        updatedUser.location = location;
+        updatedUser.gender = gender;
+        updatedUser.age = age;
+        await updatedUser.save();
+        console.log('Updated user:', updatedUser);
 
         if (!updatedUser) {
-            throw new Error("User not found");
+            return { success: false, error: "User not found" };
         }
 
-        return JSON.parse(JSON.stringify(updatedUser));
+        return { success: true, data: JSON.parse(JSON.stringify(updatedUser)) };
     } catch (error: any) {
-        throw new Error(`Failed to update user profile: ${error.message}`);
+        console.error('Error updating user:', error);
+        return { success: false, error: `Failed to update user profile: ${error.message}` };
     }
 }
+
+
+export async function updateUserProfilePicture(
+    id: string,
+    buffer: Buffer,
+    type: string
+  ) {
+    try {
+      await connectToDatabase();
+      const user = await User.findById(id);
+      if (!user) {
+        throw new Error("User not found");
+      }
+      console.log(id, buffer, type);
+      user.image = `data:${type};base64,${Buffer.from(buffer).toString(
+        "base64"
+      )}`;
+      await user.save();
+      return { url: user.image };
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+    }
+  }
+  

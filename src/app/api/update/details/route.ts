@@ -3,14 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, email, phone, location } = await req.json();
+    const {userId, email, phone, location, gender, age} = await req.json();
     
-    const result = await updateProfile(userId, email, phone, location);
+    if (!userId) {
+      return NextResponse.json(
+        { message: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const result = await updateProfile(userId, email, phone, location,gender,age);
 
     if (!result.success) {
       return NextResponse.json(
         { message: result.error },
-        { status: 404 }
+        { status: 400 }
       );
     }
 

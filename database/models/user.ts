@@ -5,6 +5,7 @@ interface User {
   email: string;
   image: string;
   gender: string;
+  phone: string;
   age: number;
   password: string;
   supportMembers: { name: string; role: string }[];
@@ -30,6 +31,12 @@ const userSchema = new mongoose.Schema(
     image: {
       type: String,
       required: false,
+    },
+    phone: {
+      type: String,
+      trim: true,
+      set: (v: string) => v || '',  // Ensure empty strings are stored properly
+      get: (v: string) => v || '',  // Ensure empty strings are retrieved properly
     },
     gender: {
       type: String,
@@ -76,6 +83,8 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { getters: true }, // Enable getters when converting to JSON
+    toObject: { getters: true }
   }
 );
 
