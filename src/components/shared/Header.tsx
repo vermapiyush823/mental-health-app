@@ -102,10 +102,10 @@ const Header = (
 
       {/* Right Side: Notifications & Profile */}
       <div className="flex items-center gap-x-4 sm:gap-x-6">
-        <button className="bg-black text-white flex gap-x-2 px-4 py-2 rounded-md text-sm items-center">
+        {/* <button className="bg-black text-white flex gap-x-2 px-4 py-2 rounded-md text-sm items-center">
           <Image src={Bell} alt="bell" width={18} height={18} />
           <span>Notifications</span>
-        </button>
+        </button> */}
           <Link href="/profile">
           <img
           src={newImg}
