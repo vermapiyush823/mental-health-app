@@ -21,7 +21,7 @@ const page = async() => {
           </div>
         <div className="col-span-1 flex flex-col w-full gap-y-5">
         <Chat_Features/>
-        <SupportNetwork/>
+        <SupportNetwork userId={userId}/>
         </div>
       </div>
     </div>
