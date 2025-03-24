@@ -30,13 +30,14 @@ export async function addPersonalGoals(userId: string, description: string, comp
         if (!user) {
             throw new Error("User not found");
         }   
-        user.personalGoals.push({
+        const newGoal: PersonalGoal = {
             id: Math.floor(Math.random() * 900 + 100).toString(),
             description: description,
             completed: completed
-        });
+        };
+        user.personalGoals.push(newGoal);
         await user.save();
-        return { message: "Personal goal added successfully" };
+        return { message: "Personal goal added successfully", id: newGoal.id };
     }
     catch (error: any) {
         throw new Error(error);

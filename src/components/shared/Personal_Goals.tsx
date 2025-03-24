@@ -34,7 +34,7 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
         // Map API response to match the expected Goal interface structure
         const formattedGoals = data.map((goal: any) => ({
           id: goal.id, // Handle both _id (MongoDB) or id
-          text: goal.description || goal.text, // Handle both description or text
+          text: goal.description, // Handle both description or text
           completed: goal.completed || false,
         }));
         setGoals(formattedGoals);
@@ -72,14 +72,10 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
 
       if (!response.ok) throw new Error("Failed to add goal");
 
-      const newGoalData = await response.json();
-      // Map the new goal to match the Goal interface
-      const formattedNewGoal = {
-        id: newGoalData._id || newGoalData.id,
-        text: newGoalData.description || newGoalData.text,
-        completed: newGoalData.completed || false,
-      };
-      setGoals([...goals, formattedNewGoal]);
+      const newGoalId = await response.json().then((data) => data.id);
+      const newGoalData = { id: newGoalId, text: newGoal, completed: false };
+     
+      setGoals([...goals, newGoalData]);
       setNewGoal(""); // Clear input
       setIsAdding(false); // Hide input after adding
     } catch (err) {
@@ -93,7 +89,6 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
   // Remove a goal
   const handleRemoveGoal = async (id: number | string) => {
     setIsLoading(true);
-    console.log(id);
     setError(""); // Reset error state
     try {
       const response = await fetch("/api/personal-goals/delete", {
@@ -173,8 +168,8 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
 
       {/* Goals List */}
       <div className="flex flex-col gap-y-2">
-        {goals.map((goal) => (
-          <div key={goal.id} className="flex items-center justify-between">
+        {goals.map((goal,index) => (
+          <div key={index} className="flex items-center justify-between">
             <label className="flex items-center gap-x-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -191,6 +186,7 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
                 {goal.text}
               </span>
             </label>
+           
             <button
               onClick={() => handleRemoveGoal(goal.id)}
               className="text-gray-500 hover:text-red-500"

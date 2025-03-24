@@ -25,8 +25,6 @@ export async function POST(req: NextRequest) {
       description, 
       completed || false
     );
-    console.log(userId, description, completed);
-
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     return NextResponse.json(
