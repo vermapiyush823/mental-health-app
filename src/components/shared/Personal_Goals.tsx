@@ -1,52 +1,175 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Plus from "../../../assets/icons/plus.svg";
 import Trash from "../../../assets/icons/trash-can-10416.svg";
 
-const PersonalGoals = () => {
-  const [goals, setGoals] = useState([
-    { id: 1, text: "Practice daily meditation", completed: true },
-    { id: 2, text: "Complete weekly journal entries", completed: false },
-    { id: 3, text: "Attend group therapy session", completed: false },
-  ]);
+interface ProfileProps {
+  userId: string;
+}
+
+interface Goal {
+  id: string | number;
+  text: string;
+  completed: boolean;
+}
+
+const PersonalGoals = ({ userId }: ProfileProps) => {
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [newGoal, setNewGoal] = useState("");
-  const [isAdding, setIsAdding] = useState(false); // Toggle input visibility
+  const [isAdding, setIsAdding] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch goals on component mount
+  useEffect(() => {
+    const fetchGoals = async () => {
+      setIsLoading(true);
+      setError(""); // Reset error state
+      try {
+        const response = await fetch(`/api/personal-goals/get?userId=${userId}`);
+        if (!response.ok) throw new Error("Failed to fetch goals");
+
+        const data = await response.json();
+        // Map API response to match the expected Goal interface structure
+        const formattedGoals = data.map((goal: any) => ({
+          id: goal.id, // Handle both _id (MongoDB) or id
+          text: goal.description || goal.text, // Handle both description or text
+          completed: goal.completed || false,
+        }));
+        setGoals(formattedGoals);
+      } catch (err) {
+        console.error("Error fetching goals:", err);
+        setError("Failed to load goals");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (userId) {
+      fetchGoals();
+    }
+  }, []);
 
   // Add a new goal
-  const handleAddGoal = () => {
+  const handleAddGoal = async () => {
     if (newGoal.trim() === "") return; // Prevent empty goals
-    setGoals([...goals, { id: Date.now(), text: newGoal, completed: false }]);
-    setNewGoal(""); // Clear input
-    setIsAdding(false); // Hide input after adding
+
+    setIsLoading(true);
+    setError(""); // Reset error state
+    try {
+      const response = await fetch("/api/personal-goals/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          description: newGoal,
+          completed: false,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to add goal");
+
+      const newGoalData = await response.json();
+      // Map the new goal to match the Goal interface
+      const formattedNewGoal = {
+        id: newGoalData._id || newGoalData.id,
+        text: newGoalData.description || newGoalData.text,
+        completed: newGoalData.completed || false,
+      };
+      setGoals([...goals, formattedNewGoal]);
+      setNewGoal(""); // Clear input
+      setIsAdding(false); // Hide input after adding
+    } catch (err) {
+      console.error("Error adding goal:", err);
+      setError("Failed to add goal");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Remove a goal
-  const handleRemoveGoal = (id: number) => {
-    setGoals(goals.filter((goal) => goal.id !== id));
+  const handleRemoveGoal = async (id: number | string) => {
+    setIsLoading(true);
+    console.log(id);
+    setError(""); // Reset error state
+    try {
+      const response = await fetch("/api/personal-goals/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          goalId: id,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to delete goal");
+
+      setGoals(goals.filter((goal) => goal.id !== id));
+    } catch (err) {
+      console.error("Error removing goal:", err);
+      setError("Failed to remove goal");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Toggle goal completion
-  const handleToggleGoal = (id: number) => {
-    setGoals(
-      goals.map((goal) =>
-        goal.id === id ? { ...goal, completed: !goal.completed } : goal
-      )
-    );
+  const handleToggleGoal = async (id: number | string) => {
+    const goalToUpdate = goals.find((goal) => goal.id === id);
+    if (!goalToUpdate) return;
+
+    setIsLoading(true);
+    setError(""); // Reset error state
+    try {
+      const response = await fetch("/api/personal-goals/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          goalId: id,
+          completed: !goalToUpdate.completed,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update goal");
+
+      setGoals(
+        goals.map((goal) =>
+          goal.id === id ? { ...goal, completed: !goal.completed } : goal
+        )
+      );
+    } catch (err) {
+      console.error("Error updating goal:", err);
+      setError("Failed to update goal");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex flex-col gap-y-5 bg-white h-fit rounded-md p-5 shadow-md">
       {/* Title */}
       <h1 className="text-lg font-bold">Personal Goals</h1>
-      {
-        goals.length === 0 && (
-            <p className="text-sm text-gray-500">
-                You have no goals set. Click the button below to add a new goal.
-            </p>
-            )
 
-      }
+      {/* Error message */}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+
+      {/* Loading state */}
+      {isLoading && <p className="text-sm text-gray-500">Loading goals...</p>}
+
+      {/* Empty state */}
+      {!isLoading && goals.length === 0 && (
+        <p className="text-sm text-gray-500">
+          You have no goals set. Click the button below to add a new goal.
+        </p>
+      )}
 
       {/* Goals List */}
       <div className="flex flex-col gap-y-2">
@@ -58,6 +181,7 @@ const PersonalGoals = () => {
                 checked={goal.completed}
                 onChange={() => handleToggleGoal(goal.id)}
                 className="w-5 h-5 accent-black cursor-pointer"
+                disabled={isLoading}
               />
               <span
                 className={`text-sm ${
@@ -70,9 +194,9 @@ const PersonalGoals = () => {
             <button
               onClick={() => handleRemoveGoal(goal.id)}
               className="text-gray-500 hover:text-red-500"
+              disabled={isLoading}
             >
               <Image src={Trash} alt="Trash Icon" width={18} height={18} />
-              {}
             </button>
           </div>
         ))}
@@ -87,10 +211,12 @@ const PersonalGoals = () => {
             onChange={(e) => setNewGoal(e.target.value)}
             placeholder="Enter new goal..."
             className="border rounded-md px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-black"
+            disabled={isLoading}
           />
           <button
             onClick={handleAddGoal}
-            className="bg-black text-white flex items-center justify-center gap-x-2 py-2 px-4 rounded-md hover:bg-gray-900 transition"
+            className="bg-black text-white flex items-center justify-center gap-x-2 py-2 px-4 rounded-md hover:bg-gray-900 transition disabled:bg-gray-400"
+            disabled={isLoading}
           >
             <Image src={Plus} alt="Plus Icon" width={18} height={18} />
             <span className="text-sm">Add</span>
@@ -99,7 +225,8 @@ const PersonalGoals = () => {
       ) : (
         <button
           onClick={() => setIsAdding(true)}
-          className="bg-black text-white flex items-center justify-center gap-x-2 py-2 px-4 rounded-md hover:bg-gray-900 transition"
+          className="bg-black text-white flex items-center justify-center gap-x-2 py-2 px-4 rounded-md hover:bg-gray-900 transition disabled:bg-gray-400"
+          disabled={isLoading}
         >
           <Image src={Plus} alt="Plus Icon" width={18} height={18} />
           <span className="text-sm">Add a new goal</span>
