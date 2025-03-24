@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await addSupportMember(userId, name, email, phone);
-    console.log(result);
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     return NextResponse.json(

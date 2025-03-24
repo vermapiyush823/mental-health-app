@@ -53,7 +53,6 @@ export async function addSupportMember(userId: string, name: string, email: stri
         };
 
         
-        console.log("Adding support member with data:", newMember);
         
         // Add to support members array
         user.supportMembers.push(newMember);
@@ -63,7 +62,6 @@ export async function addSupportMember(userId: string, name: string, email: stri
         
         // Fetch the updated user to confirm the change
         const updatedUser = await User.findById(userId);
-        console.log("Updated support members:", updatedUser?.supportMembers);
         
         return { 
             message: "Support member added successfully",
