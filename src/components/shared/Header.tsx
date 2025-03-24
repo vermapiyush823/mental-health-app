@@ -116,7 +116,7 @@ const Header = (
         {/* Mobile Menu Button (Hidden on Large Screens) */}
         <button type="button"
           onClick={()=>logout()}
-        className="bg-black text-white px-4 py-2 rounded-lg sm:flex hidden">
+        className="bg-black text-white px-4 py-2 rounded-md sm:flex hidden">
           Logout
         </button>
         <button

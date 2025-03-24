@@ -58,6 +58,9 @@ export async function updatePersonalGoal(userId: string, goalId: string, complet
         }
         goal.completed = completed;
         await user.save();
+        if (completed) {
+            return { message: "Personal goal completed successfully" };
+        }
         return { message: "Personal goal updated successfully" };
     }
     catch (error: any) {

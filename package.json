@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "migrate:phone": "NODE_ENV=development ts-node database/migrations/addPhoneField.ts",
-    "migrate:defaults": "NODE_ENV=development ts-node database/migrations/setUserDefaults.ts"
+    "migrate:defaults": "NODE_ENV=development ts-node database/migrations/setUserDefaults.ts",
+    "migrate:members": "NODE_ENV=development ts-node database/migrations/migrateSupportMembers.ts",
+    "migrate:fixmembers-schema": "NODE_ENV=development ts-node database/migrations/fixSupportMembersSchema.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",

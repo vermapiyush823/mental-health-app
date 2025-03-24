@@ -8,7 +8,7 @@ interface User {
   phone: string;
   age: number;
   password: string;
-  supportMembers: { name: string; role: string }[];
+  supportMembers: { name: string; email: string , phone: string}[];
   personalGoals: { id: string; description: string; completed: boolean }[];
   personalizedResources: { id: string}[];
   moodScore: { date: Date; score: number }[];
@@ -52,7 +52,8 @@ const userSchema = new mongoose.Schema(
     },
     supportMembers: [{
       name: String,
-      role: String,
+      email: String,
+      phone:String,
     }],
     personalGoals: [{
       id: String,

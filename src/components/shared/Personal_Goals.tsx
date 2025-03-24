@@ -20,6 +20,7 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   // Fetch goals on component mount
   useEffect(() => {
@@ -31,6 +32,7 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
         if (!response.ok) throw new Error("Failed to fetch goals");
 
         const data = await response.json();
+        console.log(data);
         // Map API response to match the expected Goal interface structure
         const formattedGoals = data.map((goal: any) => ({
           id: goal.id, // Handle both _id (MongoDB) or id
@@ -72,7 +74,12 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
 
       if (!response.ok) throw new Error("Failed to add goal");
 
-      const newGoalId = await response.json().then((data) => data.id);
+      const newGoalJsonRes : any = await response.json();
+      const newGoalId = newGoalJsonRes.id; 
+      setMessage(newGoalJsonRes.message);
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);      
       const newGoalData = { id: newGoalId, text: newGoal, completed: false };
      
       setGoals([...goals, newGoalData]);
@@ -101,7 +108,12 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
           goalId: id,
         }),
       });
-
+      console.log(response);
+      const responseJson = await response.json();
+      setMessage(responseJson.message);
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
       if (!response.ok) throw new Error("Failed to delete goal");
 
       setGoals(goals.filter((goal) => goal.id !== id));
@@ -134,7 +146,11 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
       });
 
       if (!response.ok) throw new Error("Failed to update goal");
-
+      const responseJson = await response.json();
+      setMessage(responseJson.message);
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);    
       setGoals(
         goals.map((goal) =>
           goal.id === id ? { ...goal, completed: !goal.completed } : goal
@@ -158,6 +174,9 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
 
       {/* Loading state */}
       {isLoading && <p className="text-sm text-gray-500">Loading goals...</p>}
+
+      {/* Success message */}
+      {message && <p className="text-green-500 text-sm">{message}</p>}
 
       {/* Empty state */}
       {!isLoading && goals.length === 0 && (
