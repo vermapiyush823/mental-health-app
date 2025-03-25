@@ -88,6 +88,11 @@ const SignInPage = () => {
             )}
           </button>
         </form>
+        <p className="text-end text-sm text-gray-600 mt-4">
+          <Link href="/reset-password">
+            <span className="text-black font-semibold cursor-pointer">Forgot your password?</span>
+          </Link>
+        </p>
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account?{" "}
           <span className="text-black font-semibold cursor-pointer">

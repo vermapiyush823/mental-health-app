@@ -74,4 +74,19 @@ export async function signUp(name: string, email: string, password: string,age:N
   }
 }
 
+export async function changePassword(email: string, password: string){
+  try {
+    await connectToDatabase();
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const updatedUser = await User.findOne({ email });
+      if (!updatedUser) {
+        throw new Error("User not found");
+      }
+      updatedUser.password = hashedPassword;
+      await updatedUser.save();
+  }
+  catch (error: any) {
+    throw new Error(`Failed to change password: ${error.message}`);
+  }
+}
 
