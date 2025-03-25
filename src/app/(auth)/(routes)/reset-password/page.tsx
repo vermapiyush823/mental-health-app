@@ -11,6 +11,7 @@ const ResetPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   
   // Track the current step in the reset password flow
   const [currentStep, setCurrentStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
@@ -93,7 +94,11 @@ const ResetPasswordPage = () => {
       if (!response.ok) {
         throw new Error(data.error || "Failed to reset password");
       }
-      router.push('/sign-in');
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        router.push('/sign-in');
+      }, 3000);
     } catch (err: any) {
       console.error("Password reset error:", err);
       setError(err.message || "Failed to reset password. Please try again.");
@@ -194,6 +199,7 @@ const ResetPasswordPage = () => {
               />
             </div>
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            {success && <p className="text-green-500 text-sm mb-4">Password reset successful. Redirecting...</p>}
             <button
               type="submit"
               className="w-full bg-black text-white py-2 rounded-lg hover:opacity-90 flex items-center justify-center"
