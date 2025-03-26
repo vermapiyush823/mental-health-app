@@ -40,7 +40,7 @@ const Profile = ({userId}:ProfileProps) => {
             setNewImg(URL.createObjectURL(file)); // Preview image
         }
     };
-
+    const [newImgUpdated, setNewImgUpdated] = useState(false);
     const handleProfilePictureUpdate = async () => {
         if (!selectedImage) return;
 
@@ -57,6 +57,9 @@ const Profile = ({userId}:ProfileProps) => {
             if (response.ok) {
                 const data = await response.json();
                 console.log("Profile picture updated successfully", data.url);
+                setNewImgUpdated(true);
+                setTimeout(() => setNewImgUpdated(false), 3000);
+
                 setNewImg(data.url.url); // Update with new image from server
             } else {
                 const errorData = await response.json();
@@ -166,11 +169,16 @@ const Profile = ({userId}:ProfileProps) => {
   {loading ? (
     <div className="w-32 h-32 rounded-full bg-gray-300 animate-pulse"></div>
   ) : (
+   <>
     <img
       src={newImg}
       alt="User Profile"
-      className="w-32 h-32 rounded-full shadow-md"
+      className="w-32 h-32 rounded-full shadow-md object-cover"
     />
+    {newImgUpdated && (
+      <p className="text-green-600 font-semibold">Profile picture updated!</p>
+    )}
+    </>
   )}
   <div className="text-center sm:text-left">
     {loading ? (
