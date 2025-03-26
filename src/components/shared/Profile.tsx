@@ -104,7 +104,7 @@ const Profile = ({userId}:ProfileProps) => {
                 setGender(userData.user.data.gender);
                 setAge(userData.user.data.age);
                 setName(userData.user.data.name);
-                setNewImg(userData.user.data.image);
+                setNewImg(userData.user.data.image?userData.user.data.image:newImg);
                 setMemberDate(
                     userData.user.data.createdAt
                       ? new Date(userData.user.data.createdAt).toLocaleDateString("en-US", {
@@ -217,104 +217,103 @@ const Profile = ({userId}:ProfileProps) => {
 </div>
 
            {/* Personal Information */}
-           <div className="mt-10">
-             <h3 className="text-2xl font-semibold mb-3">Personal Information</h3>
-             <table className="w-full text-lg">
-               <tbody>
-                 <tr>
-                   <td className="p-3 font-bold">Email:</td>
-                   <td className="p-3">
-                     {loading ? (
-                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-3/4"></div>
-                     ) : enableEdit ? (
-                       <input
-                         type="email"
-                         value={email}
-                         onChange={(e) => setEmail(e.target.value)}
-                         className="border border-gray-400 p-2 rounded-md w-full outline-black"
-                       />
-                     ) : (
-                       email
-                     )}
-                   </td>
-                 </tr>
-                 <tr className="">
-                   <td className="p-3 font-bold">Phone:</td>
-                   <td className="p-3">
-                     {loading ? (
-                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-3/4"></div>
-                     ) : enableEdit ? (
-                       <input
-                         type="text"
-                         value={phone}
-                         onChange={(e) => setPhone(e.target.value)}
-                         className="border border-gray-400 p-2 rounded-md w-full outline-black"
-                       />
-                     ) : (
-                       phone
-                     )}
-                   </td>
-                 </tr>
-                 <tr>
-                   <td className="p-3 font-bold">Location:</td>
-                   <td className="p-3">
-                     {loading ? (
-                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-3/4"></div>
-                     ) : enableEdit ? (
-                       <input
-                         type="text"
-                         value={location}
-                         onChange={(e) => setLocation(e.target.value)}
-                         className="border border-gray-400 p-2 rounded-md w-full outline-black"
-                       />
-                     ) : (
-                       location
-                     )}
-                   </td>
-                 </tr>
-                 <tr>
-                   <td className="p-3 font-bold">Age:</td>
-                   <td className="p-3">
-                     {loading ? (
-                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-16"></div>
-                     ) : enableEdit ? (
-                       <input
-                         type="number"
-                         value={age}
-                         onChange={(e) => setAge(e.target.value)}
-                         className="border border-gray-400 p-2 rounded-md w-full outline-black"
-                         min="1"
-                         max="120"
-                       />
-                     ) : (
-                       age
-                     )}
-                   </td>
-                 </tr>
-                 <tr>
-                   <td className="p-3 font-bold">Gender:</td>
-                   <td className="p-3">
-                     {loading ? (
-                       <div className="animate-pulse h-6 bg-gray-300 rounded-md w-32"></div>
-                     ) : enableEdit ? (
-                       <select
-                        title='gender'
-                         value={gender}
-                         onChange={(e) => setGender(e.target.value)}
-                         className="border border-gray-400 p-2 rounded-md w-full outline-black"
-                       >
-                         <option value="Male">Male</option>
-                         <option value="Female">Female</option>
-                         <option value="Other">Other</option>
-                       </select>
-                     ) : (
-                       gender
-                     )}
-                   </td>
-                 </tr>
-               </tbody>
-             </table>
-
+            <div className="mt-10 flex  overflow-scroll flex-col">
+              <h3 className="text-2xl font-semibold mb-3">Personal Information</h3>
+              <table className="max-w-6xl text-lg overflow-hidden">
+              <tbody >
+                <tr>
+                  <td className="p-3 font-bold whitespace-nowrap">Email:</td>
+                  <td className="p-3 break-words">
+                    {loading ? (
+                      <div className="animate-pulse h-6 bg-gray-300 rounded-md w-3/4"></div>
+                    ) : enableEdit ? (
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="border border-gray-400 p-2 rounded-md w-full outline-black"
+                      />
+                    ) : (
+                      <div className="break-words overflow-hidden">{email}</div>
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold whitespace-nowrap">Phone:</td>
+                  <td className="p-3 break-words">
+                    {loading ? (
+                      <div className="animate-pulse h-6 bg-gray-300 rounded-md w-3/4"></div>
+                    ) : enableEdit ? (
+                      <input
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="border border-gray-400 p-2 rounded-md w-full outline-black"
+                      />
+                    ) : (
+                      <div className="break-words overflow-hidden">{phone}</div>
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold whitespace-nowrap">Location:</td>
+                  <td className="p-3 break-words">
+                    {loading ? (
+                      <div className="animate-pulse h-6 bg-gray-300 rounded-md w-3/4"></div>
+                    ) : enableEdit ? (
+                      <input
+                        type="text"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="border border-gray-400 p-2 rounded-md w-full outline-black"
+                      />
+                    ) : (
+                      <div className="break-words overflow-hidden">{location}</div>
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold whitespace-nowrap">Age:</td>
+                  <td className="p-3 break-words">
+                    {loading ? (
+                      <div className="animate-pulse h-6 bg-gray-300 rounded-md w-16"></div>
+                    ) : enableEdit ? (
+                      <input
+                        type="number"
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        className="border border-gray-400 p-2 rounded-md w-full outline-black"
+                        min="1"
+                        max="120"
+                      />
+                    ) : (
+                      <div className="break-words overflow-hidden">{age}</div>
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold whitespace-nowrap">Gender:</td>
+                  <td className="p-3 break-words">
+                    {loading ? (
+                      <div className="animate-pulse h-6 bg-gray-300 rounded-md w-32"></div>
+                    ) : enableEdit ? (
+                      <select
+                        title="gender"
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                        className="border border-gray-400 p-2 rounded-md w-full outline-black"
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    ) : (
+                      <div className="break-words overflow-hidden">{gender}</div>
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
              {/* Preferences */}
              <h3 className="text-2xl font-semibold mt-6 mb-3">Preferences</h3>
              <div className="flex items-center justify-between">

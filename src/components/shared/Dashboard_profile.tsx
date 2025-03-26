@@ -57,7 +57,7 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
                   }
                   const userData = await response.json();
                   setName(userData.user.data.name);
-                  setNewImg(userData.user.data.image);
+                  setNewImg(userData.user.data.image?userData.user.data.image:newImg);
                   setMemberDate(
                       userData.user.data.createdAt
                         ? new Date(userData.user.data.createdAt).toLocaleDateString("en-US", {

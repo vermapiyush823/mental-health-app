@@ -6,6 +6,7 @@ interface User {
   image: string;
   gender: string;
   phone: string;
+  location: string;
   age: number;
   password: string;
   supportMembers: { name: string; email: string , phone: string}[];
@@ -41,6 +42,10 @@ const userSchema = new mongoose.Schema(
     gender: {
       type: String,
       required: ['true']
+    },
+    location: {
+      type: String,
+      required: ['false']
     },
     age: {
       type: Number,

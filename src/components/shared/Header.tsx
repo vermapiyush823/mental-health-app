@@ -32,7 +32,10 @@ const Header = (
                       return;
                   }
                   const userData = await response.json();
-                  setNewImg(userData.user.data.image);
+                  console.log("User data:", userData.user.data);
+                  if(userData.user.data.image){
+                    setNewImg(userData.user.data.image);
+                  }
           }
           catch(err){
               console.error("Error during fetching user details", err);
