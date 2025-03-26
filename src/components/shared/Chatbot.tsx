@@ -37,6 +37,7 @@ const Chatbot = ({userId}:ChatbotProps) => {
   const [showHistory, setShowHistory] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [chatId,setChatId] = useState('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -138,6 +139,7 @@ const Chatbot = ({userId}:ChatbotProps) => {
         },
         body: JSON.stringify({
           userId,
+          oldChatId: chatId,
           userMessages: currentSession.userMessages,
           chatbotMessages: currentSession.botMessages,
           startDate: currentSession.startDate,
@@ -187,6 +189,7 @@ const Chatbot = ({userId}:ChatbotProps) => {
       
       const data = await response.json();
       setChatHistory(data.data.chat || []);
+      setChatId(data.data.chatId);
       setShowHistory(true);
       
     } catch (error) {
@@ -206,6 +209,43 @@ const Chatbot = ({userId}:ChatbotProps) => {
     return date.toLocaleDateString();
   };
 
+  const loadChatHistory = (chat: any) => {
+    // Create messages array from chat history
+    const newMessages = [];
+    
+    // First message is always from bot
+    newMessages.push({
+      role: "bot",
+      text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?"
+    });
+    
+    // Add user and bot messages alternately
+    for (let i = 0; i < chat.userMessage.length; i++) {
+      newMessages.push({ role: "user", text: chat.userMessage[i] });
+      
+      if (chat.chatbotMessage[i+1]) { // +1 because we already added the first bot message
+        newMessages.push({ role: "bot", text: chat.chatbotMessage[i+1] });
+      }
+    }
+    
+    // Set messages and update current session
+    setMessages(newMessages);
+    
+    // Set the chatId to continue the existing chat
+    setChatId(chat.chatId);
+    
+    // Update current session with the loaded history
+    setCurrentSession({
+      startDate: new Date(),  // Use current date when continuing a chat
+      startTime: new Date().toLocaleTimeString(),  // Use current time when continuing a chat
+      userMessages: [...chat.userMessage],
+      botMessages: [...chat.chatbotMessage]
+    });
+    
+    // Close history view
+    setShowHistory(false);
+  };
+
   return (
     <div className="flex flex-col h-[80vh] sm:h-[81.9vh] bg-white gap-y-4 shadow-md sm:py-6 sm:px-8 py-2 px-4 rounded-md">
       <div className="flex justify-between items-center bg-white">
@@ -214,14 +254,14 @@ const Chatbot = ({userId}:ChatbotProps) => {
           <button 
             onClick={fetchChatHistory}
             disabled={loading}
-            className="text-xs bg-gray-200 hover:bg-gray-300 py-1 px-3 rounded-md"
+            className="text-xs bg-gray-200 hover:bg-gray-300 py-1 sm:py-3 px-3 rounded-md"
           >
             View History
           </button>
           <button 
             onClick={endChatSession}
             disabled={loading || !currentSession?.userMessages.length}
-            className="text-xs bg-black text-white hover:bg-gray-800 py-1 px-3 rounded-md"
+            className="text-xs  bg-black text-white hover:bg-gray-800 py-1 sm:py-3 px-3 rounded-md"
           >
             End & Save Chat
           </button>
@@ -234,7 +274,7 @@ const Chatbot = ({userId}:ChatbotProps) => {
             <h2 className="font-medium">Chat History</h2>
             <button 
               onClick={closeHistory} 
-              className="text-xs bg-gray-200 hover:bg-gray-300 py-1 px-2 rounded-md"
+              className="text-xs bg-black text-white hover:bg-black/55 py-2 px-2 rounded-md"
             >
               Back to Chat
             </button>
@@ -244,12 +284,24 @@ const Chatbot = ({userId}:ChatbotProps) => {
             <p className="text-center text-gray-500">No chat history found</p>
           ) : (
             chatHistory.map((chat, idx) => (
-              <div key={idx} className="bg-white p-3 rounded-md shadow-sm">
+              <div 
+                key={idx} 
+                className="bg-white p-3 rounded-md shadow-sm hover:bg-gray-800
+                transition duration-300 ease-in-out
+                hover:text-white  cursor-pointer group"
+                onClick={() => loadChatHistory(chat)}
+              >
                 <div className="flex justify-between mb-2 text-xs text-gray-500">
-                  <span>{formatDate(chat.date)}</span>
+                <div className="flex items-center gap-x-2">
+                <span>{formatDate(chat.date)}</span>
+                  <span
+                    className="bg-black  
+                      group-hover:bg-white group-hover:text-black text-white px-2 py-1 rounded-md transition duration-300 ease-in-out"
+                  >{chat.userMessage[0]}</span>
+                  </div>
                   <span>{chat.time}</span>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-24 overflow-y-auto">
                   {chat.userMessage.map((msg: string, i: number) => (
                     <div key={`user-${i}`} className="flex flex-col">
                       <span className="text-xs font-medium">You:</span>

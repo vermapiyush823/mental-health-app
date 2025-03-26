@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 interface ChatHistory {
     userId: string;
     chat: {
+        chatId: string;
         chatbotMessage: string[];
         userMessage: string[];
         date: Date;
@@ -16,8 +17,13 @@ const chatHistorySchema = new mongoose.Schema(
             type: String,
             required: [true, "User Id is required"],
         },
+       
         chat: [
             {
+                chatId: {
+                    type: String,
+                    required: [true, "Chat Id is required"],
+                },
                 chatbotMessage: {
                     type: [String],
                     required: true,

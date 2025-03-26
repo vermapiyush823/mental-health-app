@@ -2,50 +2,66 @@ import { connectToDatabase } from "../mongoose";
 import ChatHistory from "../../database/models/chat_history"
 
 // Create new chat session or add to existing one
+interface Chat{
+        userId: string;
+        chatId: string;
+        userMessages: string[];
+        chatbotMessages: string[];
+        startDate: Date;
+        startTime: string;
+}
 export async function addChatHistory({
   userId,
+  chatId,
   userMessages,
   chatbotMessages,
   startDate,
   startTime
-}: {
-  userId: string;
-  userMessages: string[];
-  chatbotMessages: string[];
-  startDate: Date;
-  startTime: string;
-}) {
+}: Chat) {
   try {
     await connectToDatabase();
     
-    // Check if user already has chat history
-    const existingHistory = await ChatHistory.findOne({ userId });
+    // Check if chat history already exists for the user
+    const userChatHistory = await ChatHistory.findOne({ userId });
     
-    if (existingHistory) {
-      // Add to existing chat history
-      existingHistory.chat.push({
-        userMessage: userMessages,
-        chatbotMessage: chatbotMessages,
-        date: startDate,
-        time: startTime
-      });
+    if (userChatHistory) {
+      // Find if this specific chat exists
+      const existingChat = userChatHistory.chat.find(
+        (chat: any) => chat.chatId === chatId
+      );
       
-      await existingHistory.save();
-      return existingHistory;
+      if (existingChat) {
+        // Add messages to existing chat
+        existingChat.userMessage = userMessages;
+        existingChat.chatbotMessage = chatbotMessages;
+      } else {
+        // Add new chat to existing user's chat array
+        userChatHistory.chat.push({
+          chatId,
+          userMessage: userMessages,
+          chatbotMessage: chatbotMessages,
+          date: startDate,
+          time: startTime
+        });
+      }
+      
+      await userChatHistory.save();
     } else {
-      // Create new chat history
-      const newChatHistory = await ChatHistory.create({
+      // Create new user chat history
+      await ChatHistory.create({
         userId,
         chat: [{
+          chatId,
           userMessage: userMessages,
           chatbotMessage: chatbotMessages,
           date: startDate,
           time: startTime
         }]
       });
-      
-      return newChatHistory;
     }
+    
+    return "Chat history added successfully";
+    
   } catch (error) {
     console.error("Error adding chat history:", error);
     throw error;
