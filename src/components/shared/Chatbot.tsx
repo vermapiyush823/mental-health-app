@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import Send from "../../../assets/icons/send.svg";
 import Image from "next/image";
 import BotIcon from "../../../assets/icons/bot.svg";
-import UserIcon from "../../../assets/icons/user.png";
 import { GoogleGenerativeAI } from "@google/generative-ai"; 
 
 const genAI = new GoogleGenerativeAI("AIzaSyBdzw6R-jZs5S7x3mUBTfzBl7gl3Ld-uNA"); 
@@ -45,7 +44,7 @@ const Chatbot = ({userId}:ChatbotProps) => {
   const [messages, setMessages] = useState([
     { role: "bot", text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?" },
   ]);
-  const [userImg, setUserImg] = useState("");
+  const [userImg, setUserImg] = useState("https://api.dicebear.com/6.x/avataaars/svg");
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -405,7 +404,7 @@ const fetchUserDetails = async () => {
                 <div className={`p-2 text-sm rounded-md max-w-xs ${msg.role === "user" ? "bg-black text-white" : "bg-white shadow"}`}>
                   {msg.text}
                 </div>
-                {msg.role === "user" && <Image src={userImg} alt="User Icon" width={35} height={35} className="h-10 w-10 ml-2 rounded-full" />}
+                {msg.role === "user" && <Image src={userImg} alt="User Icon" width={35} height={35} className="h-8 w-8 ml-2 rounded-full" />}
               </div>
             </div>
           ))}
