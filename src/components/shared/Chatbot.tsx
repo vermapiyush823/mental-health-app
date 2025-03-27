@@ -44,7 +44,7 @@ const Chatbot = ({userId}:ChatbotProps) => {
   const [messages, setMessages] = useState([
     { role: "bot", text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?" },
   ]);
-  const [userImg, setUserImg] = useState("https://api.dicebear.com/6.x/avataaars/svg");
+  const [userImg, setUserImg] = useState<string>("https://api.dicebear.com/6.x/avataaars/svg");
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -322,11 +322,7 @@ const fetchUserDetails = async () => {
           {isSaving && (
             <span className="text-xs text-gray-500">Saving...</span>
           )}
-          {lastSaved && !isSaving && (
-            <span className="text-xs text-gray-500">
-              Auto-saved {lastSaved.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-            </span>
-          )}
+        
           <button 
             onClick={fetchChatHistory}
             disabled={loading}
