@@ -94,7 +94,7 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newMember.name.trim() || !newMember.email.trim() || !newMember.phone.trim()) {
+    if (!newMember.name.trim() || !newMember.email.trim() ) {
       setError("All fields are required");
       return;
     }

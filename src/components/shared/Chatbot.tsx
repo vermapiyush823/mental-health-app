@@ -45,6 +45,7 @@ const Chatbot = ({userId}:ChatbotProps) => {
   const [messages, setMessages] = useState([
     { role: "bot", text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?" },
   ]);
+  const [userImg, setUserImg] = useState("");
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -100,6 +101,37 @@ const Chatbot = ({userId}:ChatbotProps) => {
       });
     }
   }, [messages]);
+
+const fetchUserDetails = async () => {
+          try{
+              const response = await fetch("/api/get/user", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ userId }),
+                });
+                
+                  if (!response.ok) {
+                      const errorData = await response.json();
+                      console.error("Error:", errorData.message);
+                      return;
+                  }
+                  const userData = await response.json();
+                  console.log("User data:", userData.user.data);
+                  if(userData.user.data.image){
+                    setUserImg(userData.user.data.image);
+                  }
+          }
+          catch(err){
+              console.error("Error during fetching user details", err);
+          }
+      }
+      // Fetch user details on initial render
+      useEffect(() => {
+          fetchUserDetails();
+      }, []);
+
 
   // Automatically save chat when messages change
   const saveChat = useCallback(async () => {
@@ -373,7 +405,7 @@ const Chatbot = ({userId}:ChatbotProps) => {
                 <div className={`p-2 text-sm rounded-md max-w-xs ${msg.role === "user" ? "bg-black text-white" : "bg-white shadow"}`}>
                   {msg.text}
                 </div>
-                {msg.role === "user" && <Image src={UserIcon} alt="User Icon" width={35} height={35} className="ml-2" />}
+                {msg.role === "user" && <Image src={userImg} alt="User Icon" width={35} height={35} className="h-10 w-10 ml-2 rounded-full" />}
               </div>
             </div>
           ))}

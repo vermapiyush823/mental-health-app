@@ -16,7 +16,6 @@ export async function getSupportMembers(userId: string) {
             throw new Error("User not found");
         }
         
-        console.log("Raw support members:", user.supportMembers);
         
         // Ensure all members have the required fields
         const normalizedMembers = user.supportMembers.map((member: any) => ({
@@ -27,7 +26,6 @@ export async function getSupportMembers(userId: string) {
             _id: member._id || undefined
         }));
         
-        console.log("Normalized support members:", normalizedMembers);
         return normalizedMembers;
     }
     catch (error: any) {
