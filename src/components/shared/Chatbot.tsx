@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Send from "../../../assets/icons/send.svg";
 import Image from "next/image";
 import BotIcon from "../../../assets/icons/bot.svg";
@@ -26,6 +26,21 @@ const TypingIndicator = () => (
   </div>
 );
 
+// Debounce function to limit API calls
+const useDebounce = (callback: Function, delay: number) => {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  return useCallback((...args: any[]) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+    }, delay);
+  }, [callback, delay]);
+};
+
 const Chatbot = ({userId}:ChatbotProps) => {
   const [messages, setMessages] = useState([
     { role: "bot", text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?" },
@@ -37,8 +52,10 @@ const Chatbot = ({userId}:ChatbotProps) => {
   const [showHistory, setShowHistory] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [chatId,setChatId] = useState('');
-
+  const [chatId, setChatId] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -84,6 +101,55 @@ const Chatbot = ({userId}:ChatbotProps) => {
     }
   }, [messages]);
 
+  // Automatically save chat when messages change
+  const saveChat = useCallback(async () => {
+    if (!currentSession || !userId || currentSession.userMessages.length === 0) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/chat/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          oldChatId: chatId,
+          userMessages: currentSession.userMessages,
+          chatbotMessages: currentSession.botMessages,
+          startDate: currentSession.startDate,
+          startTime: currentSession.startTime
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to save chat history");
+      }
+      
+      const data = await response.json();
+      if (chatId === '') {
+        setChatId(data.data.chatId || '');
+      }
+      
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error("Error auto-saving chat:", error);
+      // Silent error in auto-save to not interrupt user experience
+    } finally {
+      setIsSaving(false);
+    }
+  }, [userId, chatId, currentSession]);
+  
+  // Debounced version of saveChat to avoid too many API calls
+  const debouncedSaveChat = useDebounce(saveChat, 2000);
+  
+  // Auto-save when messages change and there's at least one user message
+  useEffect(() => {
+    if (currentSession?.userMessages.length && currentSession.userMessages.length > 0) {
+      debouncedSaveChat();
+    }
+  }, [currentSession?.userMessages, currentSession?.botMessages, debouncedSaveChat]);
+
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -127,51 +193,22 @@ const Chatbot = ({userId}:ChatbotProps) => {
     }
   };
 
-  const endChatSession = async () => {
-    if (!currentSession) return;
+  const startNewChat = async () => {
+    // Create new session
+    const now = new Date();
+    const startTime = now.toLocaleTimeString();
     
-    setLoading(true);
-    try {
-      const response = await fetch("/api/chat/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          oldChatId: chatId,
-          userMessages: currentSession.userMessages,
-          chatbotMessages: currentSession.botMessages,
-          startDate: currentSession.startDate,
-          startTime: currentSession.startTime
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to save chat history");
-      }
-      
-      // Restart session
-      const now = new Date();
-      const startTime = now.toLocaleTimeString();
-      setCurrentSession({
-        startDate: now,
-        startTime,
-        userMessages: [],
-        botMessages: ["Chat saved! How else can I help you today?"]
-      });
-      
-      // Reset messages
-      setMessages([
-        { role: "bot", text: "Chat saved! How else can I help you today?" },
-      ]);
-      
-    } catch (error) {
-      console.error("Error saving chat:", error);
-      alert("Failed to save chat history. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    // Reset states
+    setChatId('');
+    setMessages([
+      { role: "bot", text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?" },
+    ]);
+    setCurrentSession({
+      startDate: now,
+      startTime,
+      userMessages: [],
+      botMessages: ["Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?"]
+    });
   };
 
   const fetchChatHistory = async () => {
@@ -223,7 +260,7 @@ const Chatbot = ({userId}:ChatbotProps) => {
     for (let i = 0; i < chat.userMessage.length; i++) {
       newMessages.push({ role: "user", text: chat.userMessage[i] });
       
-      if (chat.chatbotMessage[i+1]) { // +1 because we already added the first bot message
+      if (i < chat.chatbotMessage.length) { // Fixed the index issue here
         newMessages.push({ role: "bot", text: chat.chatbotMessage[i+1] });
       }
     }
@@ -236,8 +273,8 @@ const Chatbot = ({userId}:ChatbotProps) => {
     
     // Update current session with the loaded history
     setCurrentSession({
-      startDate: new Date(),  // Use current date when continuing a chat
-      startTime: new Date().toLocaleTimeString(),  // Use current time when continuing a chat
+      startDate: new Date(chat.date),
+      startTime: chat.time,
       userMessages: [...chat.userMessage],
       botMessages: [...chat.chatbotMessage]
     });
@@ -250,20 +287,28 @@ const Chatbot = ({userId}:ChatbotProps) => {
     <div className="flex flex-col h-[80vh] sm:h-[81.9vh] bg-white gap-y-4 shadow-md sm:py-6 sm:px-8 py-2 px-4 rounded-md">
       <div className="flex justify-between items-center bg-white">
         <h1 className="text-md font-semibold">AI Chat Assistant</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {isSaving && (
+            <span className="text-xs text-gray-500">Saving...</span>
+          )}
+          {lastSaved && !isSaving && (
+            <span className="text-xs text-gray-500">
+              Auto-saved {lastSaved.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </span>
+          )}
           <button 
             onClick={fetchChatHistory}
             disabled={loading}
-            className="text-xs bg-gray-200 hover:bg-gray-300 py-1 sm:py-3 px-3 rounded-md"
+            className="text-xs bg-gray-200 hover:bg-gray-300 py-2 sm:py-3 px-3 rounded-md"
           >
             View History
           </button>
           <button 
-            onClick={endChatSession}
+            onClick={startNewChat}
             disabled={loading || !currentSession?.userMessages.length}
-            className="text-xs  bg-black text-white hover:bg-gray-800 py-1 sm:py-3 px-3 rounded-md"
+            className="text-xs bg-black text-white hover:bg-gray-800 py-2 sm:py-3 px-3 rounded-md"
           >
-            End & Save Chat
+            New Chat
           </button>
         </div>
       </div>

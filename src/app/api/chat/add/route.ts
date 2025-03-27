@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     // Parse the request body
     const body = await req.json();
-    const { userId,oldChatId, userMessages, chatbotMessages, startDate, startTime } = body;
+    const { userId, oldChatId, userMessages, chatbotMessages, startDate, startTime } = body;
     
     // Validate required fields
     if (!userId || !userMessages || !chatbotMessages || !startDate || !startTime) {
@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    console.log("oldChatId",oldChatId);
-    const chatId = oldChatId===''? Math.random().toString(36).substring(7):oldChatId;
-    console.log("chatId",chatId);
+    
+    const chatId = oldChatId === '' ? Math.random().toString(36).substring(7) : oldChatId;
+    
     // Add chat history
     const chatHistory = await addChatHistory({
       userId,
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     });
     
     return NextResponse.json(
-      { success: true, data: chatHistory },
+      { success: true, data: { chatHistory, chatId } },
       { status: 201 }
     );
     
