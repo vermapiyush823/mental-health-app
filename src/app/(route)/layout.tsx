@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Header from "@/components/shared/Header";
-import { getUserId } from "@/lib/auth";
+import { getUserId } from "../../../lib/auth";
 
 export default async function Layout({
   children,

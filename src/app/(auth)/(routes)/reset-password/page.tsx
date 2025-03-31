@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -7,6 +7,7 @@ const ResetPasswordPage = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+  const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -18,6 +19,14 @@ const ResetPasswordPage = () => {
   
   // Store the OTP value received from the backend to compare with user input
   const [tokenId, setTokenId] = useState("");
+  
+  // Create refs for OTP input fields
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  
+  // Initialize the refs array
+  useEffect(() => {
+    otpInputRefs.current = otpInputRefs.current.slice(0, 6);
+  }, []);
 
   const handleGetOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +34,6 @@ const ResetPasswordPage = () => {
     setIsLoading(true);
 
     try {
-      // In a real implementation, this would call an API endpoint to send an OTP
       const response = await fetch("/api/auth/otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,8 +46,6 @@ const ResetPasswordPage = () => {
         throw new Error(data.error || "Failed to send OTP");
       }
 
-      // For demo purposes, we're assuming the API returns the OTP
-      // In production, the OTP would be sent to the user's email
       setTokenId(data.tokenId);
       setCurrentStep(2);
     } catch (err: any) {
@@ -50,22 +56,83 @@ const ResetPasswordPage = () => {
     }
   };
 
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    
+    const newOtpValues = [...otpValues];
+    newOtpValues[index] = value;
+    setOtpValues(newOtpValues);
+    
+    setOtp(newOtpValues.join(""));
+    
+    if (value !== "" && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+  
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && otpValues[index] === "" && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+  
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text").trim();
+    
+    if (!/^\d+$/.test(pastedText)) return;
+    
+    const digits = pastedText.slice(0, 6).split("");
+    const newOtpValues = [...otpValues];
+    
+    digits.forEach((digit, index) => {
+      if (index < 6) {
+        newOtpValues[index] = digit;
+      }
+    });
+    
+    setOtpValues(newOtpValues);
+    setOtp(newOtpValues.join(""));
+    
+    const nextEmptyIndex = newOtpValues.findIndex(val => val === "");
+    if (nextEmptyIndex !== -1) {
+      otpInputRefs.current[nextEmptyIndex]?.focus();
+    } else if (digits.length < 6) {
+      otpInputRefs.current[digits.length]?.focus();
+    } else {
+      otpInputRefs.current[5]?.focus();
+    }
+  };
+
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const response = await fetch("/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp, tokenId }),
-        });
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.error || "Failed to verify OTP");
+    
+    if (otp.length !== 6) {
+      setError("Please enter the complete 6-digit OTP");
+      return;
     }
-    if (data.message === "OTP verified successfully") {
-        setCurrentStep(3);
-    } else {
-      setError("Invalid OTP. Please try again.");
+    
+    try {
+      const response = await fetch("/api/auth/verify-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ otp, tokenId }),
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+          throw new Error(data.error || "Failed to verify OTP");
+      }
+      
+      if (data.message === "OTP verified successfully") {
+          setCurrentStep(3);
+      } else {
+        setError("Invalid OTP. Please try again.");
+      }
+    } catch (err: any) {
+      console.error("OTP verification error:", err);
+      setError(err.message || "Failed to verify OTP. Please try again.");
     }
   };
 
@@ -73,7 +140,6 @@ const ResetPasswordPage = () => {
     e.preventDefault();
     setError("");
     
-    // Validate password match
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -82,7 +148,6 @@ const ResetPasswordPage = () => {
     setIsLoading(true);
 
     try {
-      // In a real implementation, call an API endpoint to reset the password
       const response = await fetch("/api/auth/change-pass", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -151,21 +216,32 @@ const ResetPasswordPage = () => {
           <form onSubmit={handleVerifyOTP}>
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-2">We've sent an OTP to your email address. Please enter it below.</p>
-              <label className="block text-sm font-medium text-gray-700">OTP</label>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Enter OTP"
-                required
-                maxLength={6}
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-3">OTP</label>
+              
+              <div className="flex justify-between space-x-2">
+                {[0, 1, 2, 3, 4, 5].map((index) => (
+                  <input
+                    key={index}
+                    ref={el => { otpInputRefs.current[index] = el; }}
+                    type="text"
+                    value={otpValues[index]}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    onPaste={index === 0 ? handlePaste : undefined}
+                    className="w-10 h-12 text-center font-bold text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                    maxLength={1}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    required
+                  />
+                ))}
+              </div>
             </div>
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
             <button
               type="submit"
-              className="w-full bg-black text-white py-2 rounded-lg hover:opacity-90"
+              className="w-full bg-black text-white py-2 rounded-lg hover:opacity-90 flex items-center justify-center"
+              disabled={otp.length !== 6}
             >
               Verify OTP
             </button>
