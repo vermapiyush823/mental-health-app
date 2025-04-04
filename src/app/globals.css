@@ -3,3 +3,51 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scoreReveal {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes gaugeReveal {
+  0% { stroke-dashoffset: 251.2; }
+}
+
+.animate-fadeInRight {
+  animation: fadeInRight 0.5s forwards;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s forwards;
+}
+
+.animate-scoreReveal {
+  animation: scoreReveal 1s forwards;
+}
+
+.animate-gaugeReveal {
+  animation: gaugeReveal 1.5s ease-out forwards;
+}
+
+/* Embla Carousel Styles - removed */
