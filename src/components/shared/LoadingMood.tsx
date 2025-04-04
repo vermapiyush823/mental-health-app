@@ -6,11 +6,14 @@ const LoadingMood = () => {
   return (
     <div className="flex flex-col items-center justify-center py-12 animate-fadeIn">
     <div className="mb-8 relative">
-        <div className="grid grid-cols-5 gap-1.5">
-            {[...Array(25)].map((_, i) => (
+        <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
+            {[...Array(
+                // adjust number of dots based on screen size
+                window.innerWidth <= 400 ? 16 : 25
+            )].map((_, i) => (
                 <div 
                     key={i}
-                    className="w-3 h-3 md:w-8 md:h-8 rounded-md bg-indigo-800 opacity-0 animate-gridFadeIn" 
+                    className="w-3 h-3 md:w-7 md:h-7 rounded-md bg-indigo-800 opacity-0 animate-gridFadeIn" 
                     style={{
                         animationDelay: `${(Math.random() * 1.2).toFixed(2)}s`,
                         animationDuration: `${(Math.random() * 1 + 1.2).toFixed(2)}s`,
