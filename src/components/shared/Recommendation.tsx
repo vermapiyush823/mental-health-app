@@ -20,7 +20,7 @@ const Recommendation = ({ recommendations }: RecommendationProps) => {
 
   return (
     <div>
-      <h3 className="text-xl font-bold mb-4">Your Personalized Plan</h3>
+      <h3 className="text-xl font-bold mb-4">Recommendations</h3>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
         {recommendations.map((rec, index) => (
@@ -43,7 +43,7 @@ const Recommendation = ({ recommendations }: RecommendationProps) => {
                   rec.category === 'Exercise' ? RecommendationIcons.exercise:
                   rec.category === 'Nutrition' ? RecommendationIcons.nutrition:
                   rec.category === 'Sleep' ? RecommendationIcons.sleep :
-                  rec.category === 'Social' ? RecommendationIcons.outdoor:
+                  rec.category === 'Outdoor Time' ? RecommendationIcons.outdoor:
                   rec.category === 'Stress Management' ? RecommendationIcons.stress:
                   rec.category === 'Hydration' ? RecommendationIcons.water :
                   rec.category === 'Social Interaction' ? RecommendationIcons.outdoor :
@@ -60,8 +60,13 @@ const Recommendation = ({ recommendations }: RecommendationProps) => {
                   }`}>
                     {rec.priority}
                   </span>
+                  <h4 className={`text-sm font-semibold ml-2  ${
+                    rec.priority === 'High' ? ' text-red-700' : 
+                    rec.priority === 'Medium' ? ' text-yellow-800' : 
+                    rec.priority === 'Low' ? ' text-green-700' : ''
+                  }`}>{rec.category}</h4>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">{rec.recommendation}</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">{rec.recommendation}</p>
               </div>
             </div>
           </div>
