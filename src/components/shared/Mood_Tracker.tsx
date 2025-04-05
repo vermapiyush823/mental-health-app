@@ -176,7 +176,6 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
     };
 
     const calculateScore = async () => {
-
         // Create a new object with parsed numeric values
         const parsedData = {
             day_rating: moodData.day_rating,
@@ -189,6 +188,9 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
             stress_level: moodData.stress_level,
             food_quality: moodData.food_quality
         };
+
+        // Record the start time to ensure minimum loading time
+        const startTime = Date.now();
 
         try {
             const response = await fetch('https://mood-tracker-ee73.onrender.com/predict', {
@@ -205,6 +207,12 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
             if (!response.ok) {
                 // Handle validation errors from the API properly
                 if (data.detail && Array.isArray(data.detail)) {
+                    // Calculate elapsed time and wait if needed
+                    const elapsedTime = Date.now() - startTime;
+                    if (elapsedTime < 2000) {
+                        await new Promise(resolve => setTimeout(resolve, 2000 - elapsedTime));
+                    }
+                    
                     setValueError(data.detail);
                     setIsLoading(false);
                     return;
@@ -231,10 +239,21 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                 setRecommendations(data.recommendations);
             }
 
-            // Move to next step after data is loaded
+            // Calculate elapsed time and wait if needed to ensure minimum 2 seconds of loading
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime < 2000) {
+                await new Promise(resolve => setTimeout(resolve, 2000 - elapsedTime));
+            }
+
             setCurrentStep(currentStep + 1);
             setIsLoading(false);
         } catch (error) {
+            // For errors, also ensure minimum loading time
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime < 2000) {
+                await new Promise(resolve => setTimeout(resolve, 2000 - elapsedTime));
+            }
+            
             setIsLoading(false);
         }
     };
@@ -593,15 +612,14 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                                 {valueError.length > 0 && (
                                     <div className="bg-red-50 p-5 rounded-lg border border-red-100 mt-4">
                                         <div className="flex items-start">
-                                            <div className="text-red-500 mr-3">{FormIcons.error}</div>
                                             <div className="flex-1">
                                                 {valueError.map((error, index) => (
-                                                    <div key={index} className="mb-2 last:mb-0">
+                                                    <div key={index} className="mb-2 flex items-center last:mb-0">
+                                                        <span className="text-red-500 mr-3">{FormIcons.error}</span>
                                                         <span className="text-sm font-medium text-red-800">
                                                             {error.loc[1]}: {' '}
                                                         </span>
-                                                        <span className="text-sm text-red-700">{error.msg}</span>   
-
+                                                        <span className="text-sm text-red-500">{error.msg}</span>   
                                                     </div>
                                                 ))}
                                             </div>
