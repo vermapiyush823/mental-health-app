@@ -1,7 +1,7 @@
     // SVG illustrations for each step
     export const illustrations = {
         step1: (
-            <svg className="w-48 h-48 mx-auto mb-4" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-32 h-32 sm:w-48 sm:h-48 mx-auto mb-4" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Calendar background with gradient */}
                 <rect x="30" y="40" width="140" height="120" rx="8" fill="url(#calendarGradient)" stroke="#4B5563" strokeWidth="2" />
                 <defs>
@@ -45,7 +45,7 @@
             </svg>
         ),
         step2: (
-            <svg className="w-48 h-48 mx-auto mb-4" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-32 h-32 sm:w-48 sm:h-48 mx-auto mb-4" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="notepadGradient" x1="40" y1="60" x2="160" y2="140" gradientUnits="userSpaceOnUse">
                         <stop stopColor="#f3f4f6" />
@@ -83,7 +83,7 @@
             </svg>
         ),
         step3: (
-            <svg className="w-48 h-48 mx-auto mb-4" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-32 h-32 sm:w-48 sm:h-48 mx-auto mb-4" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="clockFaceGradient" x1="30" y1="30" x2="170" y2="170" gradientUnits="userSpaceOnUse">
                         <stop stopColor="#f3f4f6" />

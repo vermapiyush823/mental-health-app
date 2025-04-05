@@ -614,12 +614,13 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                                         <div className="flex items-start">
                                             <div className="flex-1">
                                                 {valueError.map((error, index) => (
-                                                    <div key={index} className="mb-2 flex items-center last:mb-0">
+                                                    <div key={index} className="mb-2 gap-x-1 flex items-center last:mb-0">
                                                         <span className="text-red-500 mr-3">{FormIcons.error}</span>
                                                         <span className="text-sm font-medium text-red-800">
-                                                            {error.loc[1]}: {' '}
+                                                            {error.loc[1].split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') }:
                                                         </span>
-                                                        <span className="text-sm text-red-500">{error.msg}</span>   
+                                                        <span className="text-sm sm:hidden text-red-500">{' value seems '+error.msg.split(' ')[5]}</span>   
+                                                        <span className="text-sm text-red-500 hidden sm:block">{error.msg}</span>   
                                                     </div>
                                                 ))}
                                             </div>
