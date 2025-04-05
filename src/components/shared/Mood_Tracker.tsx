@@ -41,6 +41,13 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
         'water_intake', 'people_met', 'exercise', 
         'sleep', 'screen_time', 'outdoor_time'
     ]);
+    const [valueError, setValueError] = useState<Array<{
+        type: string;
+        loc: string[];
+        msg: string;
+        input?: any;
+        ctx?: any;
+    }>>([]);
 
     const [moodData, setMoodData] = useState<MoodData>({
         day_rating: '',
@@ -161,12 +168,14 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
 
     const prevStep = () => {
         if (currentStep > 1) {
+            if(currentStep===3){
+                setValueError([]);
+            }
             setCurrentStep(currentStep - 1);
         }
     };
 
     const calculateScore = async () => {
-        console.log('Calculating score with moodData:', moodData);
 
         // Create a new object with parsed numeric values
         const parsedData = {
@@ -190,18 +199,29 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                 body: JSON.stringify(parsedData)
             });
 
-            if (!response.ok) {
-                throw new Error(`API request failed with status ${response.status}`);
-            }
-
             const data = await response.json();
+            console.log('API response:', data);
 
+            if (!response.ok) {
+                // Handle validation errors from the API properly
+                if (data.detail && Array.isArray(data.detail)) {
+                    setValueError(data.detail);
+                    setIsLoading(false);
+                    return;
+                } else {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+            }
+            
+            // Clear any previous errors
+            setValueError([]);
+            
             if (data.error) {
                 console.error('Error fetching score:', data.error);
                 setIsLoading(false);
                 return;
             }
-
+            
             // Use the score from the API response or fallback to current score
             if (data.mood_score !== undefined) {
                 setScore(parseFloat(data.mood_score));
@@ -215,8 +235,6 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
             setCurrentStep(currentStep + 1);
             setIsLoading(false);
         } catch (error) {
-            console.error('Error during API request:', error);
-            // Keep the current score in case of error
             setIsLoading(false);
         }
     };
@@ -572,6 +590,24 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                                     <p className="text-xs text-gray-500">How would you describe your food choices today?</p>
                                 </div>
                                 
+                                {valueError.length > 0 && (
+                                    <div className="bg-red-50 p-5 rounded-lg border border-red-100 mt-4">
+                                        <div className="flex items-start">
+                                            <div className="text-red-500 mr-3">{FormIcons.error}</div>
+                                            <div className="flex-1">
+                                                {valueError.map((error, index) => (
+                                                    <div key={index} className="mb-2 last:mb-0">
+                                                        <span className="text-sm font-medium text-red-800">
+                                                            {error.loc[1]}: {' '}
+                                                        </span>
+                                                        <span className="text-sm text-red-700">{error.msg}</span>   
+
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="bg-indigo-50 p-5 rounded-lg border border-indigo-100 mt-4">
                                     <div className="flex items-start">
                                         <div className="text-indigo-500 mr-3">{FormIcons.sparkle}</div>
