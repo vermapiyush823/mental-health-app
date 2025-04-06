@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, use } from "react";
 import Send from "../../../assets/icons/send.svg";
 import Image from "next/image";
 import BotIcon from "../../../assets/icons/bot.svg";
@@ -41,6 +41,22 @@ const useDebounce = (callback: Function, delay: number) => {
 };
 
 const Chatbot = ({userId}:ChatbotProps) => {
+  const [moodData, setMoodData] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchMoodData = async () => {
+      try {
+        const response = await fetch(`/api/mood-track/get-week-data?userId=${userId}`);
+        const data = await response.json();
+        setMoodData(data.data);
+      } catch (error) {
+        console.error("Error fetching mood data:", error);
+      }
+    };
+
+    fetchMoodData();
+  }
+  , [userId]);
+
   const [messages, setMessages] = useState([
     { role: "bot", text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?" },
   ]);
@@ -57,8 +73,14 @@ const Chatbot = ({userId}:ChatbotProps) => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      const chatContainer = document.getElementById('chat-messages-container');
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
   };
+
   const [isFirstRender, setIsFirstRender] = useState(true);
 
   useEffect(() => {
@@ -75,8 +97,14 @@ const Chatbot = ({userId}:ChatbotProps) => {
       });
       return;
     }
-    scrollToBottom();
-  }, [messages]);
+    
+    // Only scroll if not showing history and after a small delay to ensure DOM is updated
+    if (!showHistory) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [messages, showHistory]);
   
   // Update the current session when messages change
   useEffect(() => {
@@ -247,9 +275,23 @@ const fetchUserDetails = async () => {
     setMessages([...messages, userMessage]);
     setInput("");
     setIsTyping(true);
-
+    
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });      
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      
+      // Format mood data for better readability by the AI based on the actual response format
+      const formattedMoodData = moodData && moodData.length > 0 
+        ? moodData.map(entry => {
+            return {
+              date: entry.date ? new Date(entry.date).toLocaleDateString() : 'Unknown date',
+              overallScore: entry.score || 'Not recorded',
+              sleepHours: entry.sleep || 'Not recorded',
+              stressLevel: entry.stress || 'Not recorded',
+              recommendations: entry.recommendations || []
+            };
+          })
+        : 'No mood data available for the last 7 days';
+      
       const prompt = `You are a supportive mental health chatbot. Your role is to:
       1. Provide emotional support and understanding
       2. Listen and respond with empathy
@@ -261,7 +303,27 @@ const fetchUserDetails = async () => {
       8. The user will be from India
       9. Output should not be more than 90 words.
       10. The user may chat in English or Hindi so you should give answers in the same language.
-
+      
+      IMPORTANT ABOUT MOOD DATA:
+      The user's 7-day mood history is available below. When the user asks about their mood history, ALWAYS analyze this data specifically:
+      
+      User's 7-day mood history: ${JSON.stringify(formattedMoodData, null, 2)}
+      
+      Important notes about this data:
+      - Overall score ranges from 1-10 (where 10 is excellent mood)
+      - Sleep is measured in hours
+      - Stress levels are categorized as Low/Medium/High
+      - Recommendations are personalized suggestions based on their mood data
+      
+      When user asks ANYTHING related to their mood history, patterns, or trends, you MUST reference this specific data in your response. 
+      For example, if they ask "What could you say about my mood history for 7 days" - analyze the actual data provided above and mention:
+      - Their overall mood score
+      - Their sleep patterns
+      - Their stress levels
+      - Any recommendations that might be helpful
+      
+      DO NOT say you can't access the data - you have it available above.
+      
       Previous conversation: ${JSON.stringify(messages)}
       User's message: ${input}
       
@@ -386,7 +448,7 @@ const fetchUserDetails = async () => {
   };
 
   return (
-    <div className="flex flex-col h-[80vh] sm:h-[81.9vh] bg-white gap-y-4 shadow-md sm:py-6 sm:px-8 py-2 px-4 rounded-md">
+    <div className="flex flex-col h-[80vh] sm:h-[81.9vh] bg-white gap-y-4 shadow-md sm:py-6 sm:px-8 py-2 px-4 rounded-md overflow-hidden">
       <div className="flex justify-between items-center bg-white">
         <h1 className="text-md font-semibold">AI Chat Assistant</h1>
         <div className="flex gap-2 items-center">
@@ -463,7 +525,10 @@ const fetchUserDetails = async () => {
           )}
         </div>
       ) : (
-        <div className="flex-1 overflow-y-scroll p-4 bg-gray-100 space-y-4 rounded-md">
+        <div 
+          id="chat-messages-container"
+          className="flex-1 overflow-y-auto p-4 bg-gray-100 space-y-4 rounded-md scroll-smooth" 
+        >
           {messages.map((msg, index) => (
             <div key={index} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className="flex items-center">
@@ -485,7 +550,7 @@ const fetchUserDetails = async () => {
               </div>
             </div>
           )}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-0 w-full" />
         </div>
       )}
 
