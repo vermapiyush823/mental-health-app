@@ -2,25 +2,17 @@
 import React, { useState, useEffect } from "react";
 import { ResponsiveLine } from "@nivo/line";
 
-const data = [
-  {
-    id: "Spending",
-    color: "hsl(200, 70%, 50%)",
-    data: [
-      { x: "Mon", y: 7 },
-      { x: "Tue", y: 8 },
-      { x: "Wed", y: 6 },
-      { x: "Thu", y: 9 },
-      { x: "Fri", y: 7 },
-      { x: "Sat", y: 7.5 },
-      { x: "Sun", y: 8 },
-    ],
-  },
-];
 
-const MentalHealthChart = () => {
+interface MentalHealthChartProps {
+  chartData: {
+    id: string;
+    color: string;
+    data: { x: string; y: number }[];
+  }[];
+}
+const MentalHealthChart = ({chartData}: MentalHealthChartProps) => {
   const [chartHeight, setChartHeight] = useState(300); // Default height
-
+  
   useEffect(() => {
     const handleResize = () => {
       setChartHeight(window.innerWidth < 768 ? 200 : 300); // Smaller chart for mobile
@@ -35,7 +27,7 @@ const MentalHealthChart = () => {
   return (
     <div style={{ height: chartHeight, width: "100%" }}>
       <ResponsiveLine
-        data={data}
+        data={chartData} // Use the prop directly instead of local state
         margin={{ top: 20, right: 20, bottom: 50, left: 40 }}
         xScale={{ type: "point" }}
         yScale={{ type: "linear", min: 0, max: 10, stacked: false }}

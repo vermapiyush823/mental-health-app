@@ -138,6 +138,9 @@ const fetchUserDetails = async () => {
 
     setIsSaving(true);
     try {
+      // Generate a new chatId if we don't have one
+      const currentChatId = chatId || `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       const response = await fetch("/api/chat/add", {
         method: "POST",
         headers: {
@@ -145,7 +148,7 @@ const fetchUserDetails = async () => {
         },
         body: JSON.stringify({
           userId,
-          oldChatId: chatId,
+          chatId: currentChatId, // Use currentChatId instead of oldChatId
           userMessages: currentSession.userMessages,
           chatbotMessages: currentSession.botMessages,
           startDate: currentSession.startDate,
@@ -159,7 +162,7 @@ const fetchUserDetails = async () => {
       
       const data = await response.json();
       if (chatId === '') {
-        setChatId(data.data.chatId || '');
+        setChatId(currentChatId); // Set the chatId to our generated one if it was empty
       }
       
       setLastSaved(new Date());
@@ -229,8 +232,11 @@ const fetchUserDetails = async () => {
     const now = new Date();
     const startTime = now.toLocaleTimeString();
     
+    // Generate a new chatId
+    const newChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     // Reset states
-    setChatId('');
+    setChatId(newChatId);
     setMessages([
       { role: "bot", text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?" },
     ]);

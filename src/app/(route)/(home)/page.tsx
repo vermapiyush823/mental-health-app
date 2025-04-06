@@ -13,7 +13,7 @@ const Page = async() => {
       <Dashboard_profile userId={userId}/>
       <div className="w-[95%] grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className='col-span-1 sm:col-span-2  w-full'>
-          <Overview />
+          <Overview userId={userId}/>
           </div>
         <div className="col-span-1 flex flex-col w-full gap-y-5">
         <Personal_Goals userId={userId}/>

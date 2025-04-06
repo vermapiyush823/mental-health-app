@@ -2,7 +2,7 @@ import React from 'react'
 
 interface Props {
     catgory: string
-    score: string
+    score: string | number
 }
 
 const overview_single_score = (
@@ -13,7 +13,9 @@ const overview_single_score = (
         <p className='text-sm text-gray-500 '>{catgory}</p>
         <p className='text-lg font-bold'>
             {
-                score==='Low' ? score : `${score}/10`
+                // Check if score is a number and format it accordingly
+                typeof score === 'number' ? `${score.toFixed(1)}/10` : score
+
             }
         </p>
     </div>

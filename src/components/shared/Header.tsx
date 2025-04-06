@@ -6,47 +6,52 @@ import MenuIcon from "../../../assets/icons/burger-menu-svgrepo-com.svg";
 import CloseIcon from "../../../assets/icons/cross-svgrepo-com.svg";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-  interface HeaderProps {
-    userId: string;
-  }
-const Header = (
-  { userId }: HeaderProps
-) => {
+interface HeaderProps {
+  userId: string;
+}
+const Header = ({ userId }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [newImg,setNewImg] = useState('https://api.dicebear.com/6.x/avataaars/svg');
-  const [error,setError] = useState('');
-   
-      const fetchUserDetails = async () => {
-          try{
-              const response = await fetch("/api/get/user", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ userId }),
-                });
-                
-                  if (!response.ok) {
-                      const errorData = await response.json();
-                      console.error("Error:", errorData.message);
-                      return;
-                  }
-                  const userData = await response.json();
-                  console.log("User data:", userData.user.data);
-                  if(userData.user.data.image){
-                    setNewImg(userData.user.data.image);
-                  }
-          }
-          catch(err){
-              console.error("Error during fetching user details", err);
-          }
+  const [newImg, setNewImg] = useState(
+    "https://api.dicebear.com/6.x/avataaars/svg"
+  );
+  const [error, setError] = useState("");
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+  };
+
+  const fetchUserDetails = async () => {
+    try {
+      const response = await fetch("/api/get/user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error:", errorData.message);
+        return;
       }
-      // Fetch user details on initial render
-      useEffect(() => {
-          fetchUserDetails();
-      }, []);
+      const userData = await response.json();
+      console.log("User data:", userData.user.data);
+      if (userData.user.data.image) {
+        setNewImg(userData.user.data.image);
+      }
+    } catch (err) {
+      console.error("Error during fetching user details", err);
+    }
+  };
+
+  // Fetch user details on initial render
+  useEffect(() => {
+    fetchUserDetails();
+  }, []);
+
   const router = useRouter();
-  const logout = async()=>{
+  const logout = async () => {
     try {
       const response = await fetch("/api/auth/logout", {
         method: "POST",
@@ -59,13 +64,14 @@ const Header = (
         const errorData = await response.json();
         setError(errorData.message || "Something went wrong");
         return;
-      }else{
-        router.push('/sign-in');
+      } else {
+        router.push("/sign-in");
       }
     } catch (err) {
       console.error("Error during sign-up:", err);
     }
-  }
+  };
+
   return (
     <nav className="flex border-b bg-white  border-gray-300 items-center h-16 justify-between px-6 w-full">
       {/* Left Side: Logo & Navigation */}
@@ -74,31 +80,43 @@ const Header = (
           LO <span className="text-indigo-800">GO</span>
         </h3>
 
-
         {/* Navigation Links */}
         <ul
-          className={`absolute top-16 left-0 w-full bg-white  border-none sm:border-b border-gray-300 sm:static sm:flex sm:items-center sm:gap-x-6 text-gray-600 text-md transition-all duration-300 ease-in-out ${
+          className={`absolute top-16 z-50 left-0 w-full bg-white  border-none sm:border-b border-gray-300 sm:static sm:flex sm:items-center sm:gap-x-6 text-gray-600 text-md transition-all duration-300 ease-in-out ${
             menuOpen ? "flex flex-col py-4 shadow-md" : "hidden sm:flex"
           }`}
         >
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-            <Link href="/">Home</Link>
+            <Link href="/" onClick={closeMenu}>
+              Home
+            </Link>
           </li>
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-            <Link href="/mood-track">Mood Tracker</Link>
+            <Link href="/mood-track" onClick={closeMenu}>
+              Mood Tracker
+            </Link>
           </li>
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-            <Link href="/resources">Resources</Link>
+            <Link href="/resources" onClick={closeMenu}>
+              Resources
+            </Link>
           </li>
           <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-            <Link href="/support">Support</Link>
+            <Link href="/support" onClick={closeMenu}>
+              Support
+            </Link>
           </li>
           <li>
-          <button type="button"
-          onClick={()=>logout()}
-        className="hover:text-black sm:hidden text-purple-700 cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
-          Logout
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                closeMenu();
+              }}
+              className="hover:text-black sm:hidden text-purple-700 cursor-pointer px-6 sm:px-0 py-2 sm:py-0"
+            >
+              Logout
+            </button>
           </li>
         </ul>
       </div>
@@ -109,17 +127,19 @@ const Header = (
           <Image src={Bell} alt="bell" width={18} height={18} />
           <span>Notifications</span>
         </button> */}
-          <Link href="/profile">
+        <Link href="/profile" onClick={closeMenu}>
           <img
-          src={newImg}
-          alt="Profile"
-          className="w-10 h-10 rounded-full object-cover"
-        />
-        </Link> 
+            src={newImg}
+            alt="Profile"
+            className="w-10 h-10 rounded-full object-cover"
+          />
+        </Link>
         {/* Mobile Menu Button (Hidden on Large Screens) */}
-        <button type="button"
-          onClick={()=>logout()}
-        className="bg-black text-white px-4 py-2 rounded-md sm:flex hidden">
+        <button
+          type="button"
+          onClick={() => logout()}
+          className="bg-black text-white px-4 py-2 rounded-md sm:flex hidden"
+        >
           Logout
         </button>
         <button
@@ -134,7 +154,6 @@ const Header = (
           />
           {}
         </button>
-   
       </div>
     </nav>
   );

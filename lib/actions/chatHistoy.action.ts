@@ -21,6 +21,11 @@ export async function addChatHistory({
   try {
     await connectToDatabase();
     
+    // Ensure chatId is present
+    if (!chatId) {
+      throw new Error("Chat ID is required");
+    }
+    
     // Check if chat history already exists for the user
     const userChatHistory = await ChatHistory.findOne({ userId });
     

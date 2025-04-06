@@ -81,9 +81,27 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
               setLoading(false);
           }
       }
+       // Fetch mood details on initial render
+    const fetchMoodDetails = async () => {
+      try {
+          const response = await fetch(`/api/mood-track/get-mood-today?userId=${userId}`);
+          if (!response.ok) {
+              throw new Error("Failed to fetch mood details");
+          }
+          const data = await response.json();
+          const moodData = data.data;
+          console.log("Mood Data", moodData);
+          setTodayMoodScore(Math.round(moodData));
+          setTodayMoodLabel(moodLabels[Math.round(moodData)]);
+      } catch (error) {
+          console.error("Error fetching mood details:", error);
+      }
+  };
+
       // Fetch user details on initial render
       useEffect(() => {
           fetchUserDetails();
+          fetchMoodDetails();
       }, []);
   
   return (

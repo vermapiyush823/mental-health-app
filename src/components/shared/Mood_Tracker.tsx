@@ -60,6 +60,35 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
         stress_level: 'Medium',
         food_quality: 'Moderate'
     });
+    useEffect(()=>{
+        // checking if mood already exists for the day
+        const fetchMoodDetails = async () => {
+          try{
+            const response = await fetch(`/api/mood-track/get?userId=${userId}`);
+            const responseData = await response.json();
+            console.log('Mood details:', responseData.data);
+            if (!response.ok) {
+                console.error('Error fetching mood details:', responseData.error);
+                return;
+            }
+            if (responseData.error) {
+                console.error('Error fetching mood details:', responseData.error);
+                return;
+            }
+            if (responseData.data) {
+                const moodDetails = responseData.data;                
+                    setMoodData(moodDetails.moodInput);
+                    setScore(moodDetails.score);
+                    setRecommendations(moodDetails.reccommendations);
+                    setCurrentStep(totalSteps); // Skip to results step
+            }
+          }
+            catch (error) {
+                console.error('Error fetching mood details:', error);
+            }
+        }
+        fetchMoodDetails();
+    },[]) 
 
     // Animation trigger when changing steps
     useEffect(() => {
@@ -247,6 +276,36 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
 
             setCurrentStep(currentStep + 1);
             setIsLoading(false);
+
+            // add the mood data to the database
+            const moodDetailsRequest = {
+                userId,
+                moodDetails: {
+                    score: parseFloat(data.mood_score),
+                    moodInput: parsedData,
+                    reccommendations: data.recommendations,
+                }
+            };
+            console.log('Mood data:', moodDetailsRequest.moodDetails.reccommendations);
+            const moodDetailsResponse = await fetch('/api/mood-track/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(moodDetailsRequest)
+            });
+            const moodDetailsData = await moodDetailsResponse.json();
+
+            if (!moodDetailsResponse.ok) {
+                console.error('Error adding mood details:', moodDetailsData);
+                return;
+            }
+            if (moodDetailsData.error) {
+                console.error('Error adding mood details:', moodDetailsData.error);
+                return;
+            }
+
+
         } catch (error) {
             // For errors, also ensure minimum loading time
             const elapsedTime = Date.now() - startTime;
@@ -617,7 +676,7 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                                                     <div key={index} className="mb-2 gap-x-1 flex items-center last:mb-0">
                                                         <span className="text-red-500 mr-3">{FormIcons.error}</span>
                                                         <span className="text-sm font-medium text-red-800">
-                                                            {error.loc[1].split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') }:
+                                                            {error.loc[1].split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') }
                                                         </span>
                                                         <span className="text-sm sm:hidden text-red-500">{' value seems '+error.msg.split(' ')[5]}</span>   
                                                         <span className="text-sm text-red-500 hidden sm:block">{error.msg}</span>   
