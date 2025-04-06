@@ -35,7 +35,7 @@ const Overview = ({ userId }: OverviewProps) => {
       // Fetch data from the server
       const fetchData = async () => {
         try {
-          const response = await fetch(`http://localhost:3000/api/mood-track/get-week-data?userId=${userId}`);
+          const response = await fetch(`/api/mood-track/get-week-data?userId=${userId}`);
           const result = await response.json();
       
           const transformedData = result.data.map((item: any) => ({
