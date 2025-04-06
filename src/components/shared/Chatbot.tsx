@@ -131,16 +131,50 @@ const fetchUserDetails = async () => {
           fetchUserDetails();
       }, []);
 
+  // Initialize chat ID from session storage or generate a new one
+  useEffect(() => {
+    // Check if we have a chatId in session storage first
+    const storedChatId = sessionStorage.getItem(`chatId_${userId}`);
+    
+    if (storedChatId) {
+      // Use the stored chatId if available
+      setChatId(storedChatId);
+      console.log("Restored chat ID from session storage:", storedChatId);
+    } else if (chatId === '') {
+      // Generate a new consistent ID for this session
+      const generatedId = `chat_${userId}_${Date.now()}`;
+      setChatId(generatedId);
+      // Store in session storage for persistence across refreshes
+      sessionStorage.setItem(`chatId_${userId}`, generatedId);
+      console.log("Generated new chat ID:", generatedId);
+    }
+  }, [userId, chatId]);
+
+  // Save chat ID to session storage whenever it changes
+  useEffect(() => {
+    if (chatId) {
+      sessionStorage.setItem(`chatId_${userId}`, chatId);
+    }
+  }, [chatId, userId]);
 
   // Automatically save chat when messages change
   const saveChat = useCallback(async () => {
     if (!currentSession || !userId || currentSession.userMessages.length === 0) return;
 
+    // Skip saving if already in progress to prevent duplicate calls
+    if (isSaving) return;
+    
+    // Make sure we're using the stored chatId or generate a consistent one
+    const currentChatId = chatId || sessionStorage.getItem(`chatId_${userId}`) || `chat_${userId}_${Date.now()}`;
+    
+    // If chatId is empty, set it
+    if (chatId === '') {
+      setChatId(currentChatId);
+      sessionStorage.setItem(`chatId_${userId}`, currentChatId);
+    }
+    
     setIsSaving(true);
     try {
-      // Generate a new chatId if we don't have one
-      const currentChatId = chatId || `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
       const response = await fetch("/api/chat/add", {
         method: "POST",
         headers: {
@@ -148,7 +182,7 @@ const fetchUserDetails = async () => {
         },
         body: JSON.stringify({
           userId,
-          chatId: currentChatId, // Use currentChatId instead of oldChatId
+          oldChatId: currentChatId,
           userMessages: currentSession.userMessages,
           chatbotMessages: currentSession.botMessages,
           startDate: currentSession.startDate,
@@ -161,28 +195,50 @@ const fetchUserDetails = async () => {
       }
       
       const data = await response.json();
-      if (chatId === '') {
-        setChatId(currentChatId); // Set the chatId to our generated one if it was empty
+      
+      // If the server returned a different chatId, update ours
+      if (data.data.chatId && data.data.chatId !== currentChatId) {
+        setChatId(data.data.chatId);
+        sessionStorage.setItem(`chatId_${userId}`, data.data.chatId);
       }
       
       setLastSaved(new Date());
     } catch (error) {
       console.error("Error auto-saving chat:", error);
-      // Silent error in auto-save to not interrupt user experience
     } finally {
       setIsSaving(false);
     }
-  }, [userId, chatId, currentSession]);
+  }, [userId, chatId, currentSession, isSaving]);
   
-  // Debounced version of saveChat to avoid too many API calls
-  const debouncedSaveChat = useDebounce(saveChat, 2000);
-  
-  // Auto-save when messages change and there's at least one user message
+  // Let's use manual save instead of debounce
+  // This ensures we don't have race conditions with state updates
   useEffect(() => {
+    let saveTimeout: NodeJS.Timeout | null = null;
+    
     if (currentSession?.userMessages.length && currentSession.userMessages.length > 0) {
-      debouncedSaveChat();
+      // Only save if not already saving and enough time has passed since last save
+      if (!isSaving && (lastSaved === null || 
+          new Date().getTime() - lastSaved.getTime() > 10000)) {
+        
+        // Clear any existing timeout first
+        if (saveTimeout) {
+          clearTimeout(saveTimeout);
+        }
+        
+        // Set a new timeout
+        saveTimeout = setTimeout(() => {
+          saveChat();
+        }, 10000);
+      }
     }
-  }, [currentSession?.userMessages, currentSession?.botMessages, debouncedSaveChat]);
+    
+    // Cleanup function
+    return () => {
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+    };
+  }, [currentSession?.userMessages, currentSession?.botMessages, saveChat, lastSaved, isSaving]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -232,11 +288,14 @@ const fetchUserDetails = async () => {
     const now = new Date();
     const startTime = now.toLocaleTimeString();
     
-    // Generate a new chatId
-    const newChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate a new chatId for this session
+    const newChatId = `chat_${userId}_${Date.now()}`;
     
     // Reset states
     setChatId(newChatId);
+    // Update session storage with new chat ID
+    sessionStorage.setItem(`chatId_${userId}`, newChatId);
+    
     setMessages([
       { role: "bot", text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?" },
     ]);
@@ -246,6 +305,9 @@ const fetchUserDetails = async () => {
       userMessages: [],
       botMessages: ["Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?"]
     });
+    
+    // Reset last saved time to ensure it saves this new session
+    setLastSaved(null);
   };
 
   const fetchChatHistory = async () => {
@@ -290,15 +352,16 @@ const fetchUserDetails = async () => {
     // First message is always from bot
     newMessages.push({
       role: "bot",
-      text: "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?"
+      text: chat.chatbotMessage[0] || "Hello! I'm your mental health support assistant. I'm here to listen and help you navigate your emotions. How are you feeling today?"
     });
     
     // Add user and bot messages alternately
     for (let i = 0; i < chat.userMessage.length; i++) {
       newMessages.push({ role: "user", text: chat.userMessage[i] });
       
-      if (i < chat.chatbotMessage.length) { // Fixed the index issue here
-        newMessages.push({ role: "bot", text: chat.chatbotMessage[i+1] });
+      // Add bot response if available (using correct index)
+      if (i + 1 < chat.chatbotMessage.length) { 
+        newMessages.push({ role: "bot", text: chat.chatbotMessage[i + 1] });
       }
     }
     
@@ -307,6 +370,8 @@ const fetchUserDetails = async () => {
     
     // Set the chatId to continue the existing chat
     setChatId(chat.chatId);
+    // Update session storage with loaded chat ID
+    sessionStorage.setItem(`chatId_${userId}`, chat.chatId);
     
     // Update current session with the loaded history
     setCurrentSession({

@@ -19,27 +19,49 @@ export async function addChatHistory({
   startTime
 }: Chat) {
   try {
-    await connectToDatabase();
-    
-    // Ensure chatId is present
-    if (!chatId) {
-      throw new Error("Chat ID is required");
+    // Validate chatId to prevent MongoDB validation error
+    if (!chatId || chatId.trim() === '') {
+      throw new Error("Chat Id is required");
     }
+    
+    await connectToDatabase();
     
     // Check if chat history already exists for the user
     const userChatHistory = await ChatHistory.findOne({ userId });
     
     if (userChatHistory) {
       // Find if this specific chat exists
-      const existingChat = userChatHistory.chat.find(
+      const existingChatIndex = userChatHistory.chat.findIndex(
         (chat: any) => chat.chatId === chatId
       );
       
-      if (existingChat) {
-        // Add messages to existing chat
-        existingChat.userMessage = userMessages;
-        existingChat.chatbotMessage = chatbotMessages;
+      if (existingChatIndex !== -1) {
+        // Update existing chat instead of replacing
+        userChatHistory.chat[existingChatIndex].userMessage = userMessages;
+        userChatHistory.chat[existingChatIndex].chatbotMessage = chatbotMessages;
+        await userChatHistory.save();
+        return { updated: true, chatId };
       } else {
+        // Check if there's a chat with exactly the same messages (potential duplicate)
+        const potentialDuplicate = userChatHistory.chat.findIndex((chat: any) => {
+          // If message counts don't match, it's definitely not a duplicate
+          if (chat.userMessage.length !== userMessages.length) return false;
+          
+          // Compare userMessages arrays
+          const userMsgMatch = chat.userMessage.every((msg: string, i: number) => 
+            msg === userMessages[i]);
+            
+          return userMsgMatch;
+        });
+        
+        if (potentialDuplicate !== -1) {
+          // If found a potential duplicate, update it instead
+          userChatHistory.chat[potentialDuplicate].userMessage = userMessages;
+          userChatHistory.chat[potentialDuplicate].chatbotMessage = chatbotMessages;
+          await userChatHistory.save();
+          return { updated: true, chatId: userChatHistory.chat[potentialDuplicate].chatId };
+        }
+        
         // Add new chat to existing user's chat array
         userChatHistory.chat.push({
           chatId,
@@ -48,9 +70,10 @@ export async function addChatHistory({
           date: startDate,
           time: startTime
         });
+        
+        await userChatHistory.save();
+        return { added: true, chatId };
       }
-      
-      await userChatHistory.save();
     } else {
       // Create new user chat history
       await ChatHistory.create({
@@ -63,10 +86,9 @@ export async function addChatHistory({
           time: startTime
         }]
       });
+      
+      return { created: true, chatId };
     }
-    
-    return "Chat history added successfully";
-    
   } catch (error) {
     console.error("Error adding chat history:", error);
     throw error;
