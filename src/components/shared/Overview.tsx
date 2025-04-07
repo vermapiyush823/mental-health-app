@@ -37,12 +37,12 @@ const Overview = ({ userId }: OverviewProps) => {
         try {
           const response = await fetch(`/api/mood-track/get-week-data?userId=${userId}`);
           const result = await response.json();
-      
           const transformedData = result.data.map((item: any) => ({
-            x: new Date(item.date).toLocaleDateString("en-US", { weekday: "short" }),
+            x: new Date(item.date).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
             y: item.score,
           }));
           
+
           const formattedData = [
             {
               id: "Mood Score",
@@ -50,13 +50,17 @@ const Overview = ({ userId }: OverviewProps) => {
               data: transformedData,
             },
           ];
-          
           setData(formattedData);
           
           setMoodScore(result.data[result.data.length - 1].score);
-          setSleepQuality(result.data[result.data.length - 1].sleep);
-          setStressLevel(result.data[result.data.length - 1].stress);
-          const formattedRecommendations = result.data[result.data.length - 1].recommendations.map((rec: any) => rec.recommendation);
+          const totalMoodScore = result.data.reduce((acc: number, item: any) => acc + item.score, 0);
+          const averageMoodScore = totalMoodScore / result.data.length;
+          setMoodScore(averageMoodScore);
+          const totalSleep = result.data.reduce((acc: number, item: any) => acc + item.sleep, 0);
+          const averageSleep = totalSleep / result.data.length;
+          setSleepQuality(averageSleep);
+          setStressLevel(result.data[0].stress);
+          const formattedRecommendations = result.data[0].recommendations.map((rec: any) => rec.recommendation);
           setRecommendations(formattedRecommendations);     
         } catch (error) {
           console.error("Error fetching data:", error);

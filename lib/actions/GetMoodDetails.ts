@@ -5,7 +5,7 @@ export const getTodayMoodDetails = async (userId: string) => {
     try {
         await connectToDatabase();
 
-        // Get today's date in YYYY-MM-DD format
+        // Add the offset for IST (UTC+5:30, which is 330 minutes)
         const today = new Date();
 
         // Find the mood details for the user on today's date
@@ -15,12 +15,17 @@ export const getTodayMoodDetails = async (userId: string) => {
         if (!moodDetails) {
             return { success: false, error: "Mood details not found for today" };
         }
-        // fomat the date to YYYY-MM-DD
-        const formattedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString().split('T')[0];
-        const todayMoodData = moodDetails.moodData.filter((mood:any) => {
+        if (moodDetails.moodData.length === 0) {
+            return { success: false, error: "Mood details not found for today" };
+        }
+        const moodData = moodDetails.moodData.filter((mood:any) => {
             const moodDate = new Date(mood.date);
-            return moodDate.toISOString().split('T')[0] === formattedDate;
+            console.log(moodDate.toISOString().split('T')[0], today.toISOString().split('T')[0]);
+            return moodDate.toISOString().split('T')[0] === today.toISOString().split('T')[0];
         })
+        if (moodData.length === 0) {
+            return { success: false, error: "Mood details not found for today" };
+        }
 
         return { success: true, data:moodDetails.moodData[moodDetails.moodData.length - 1]};
     } catch (error) {

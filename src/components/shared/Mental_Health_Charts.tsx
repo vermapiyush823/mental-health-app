@@ -12,7 +12,7 @@ interface MentalHealthChartProps {
 }
 const MentalHealthChart = ({chartData}: MentalHealthChartProps) => {
   const [chartHeight, setChartHeight] = useState(300); // Default height
-  
+    console.log(chartData);
   useEffect(() => {
     const handleResize = () => {
       setChartHeight(window.innerWidth < 768 ? 200 : 300); // Smaller chart for mobile

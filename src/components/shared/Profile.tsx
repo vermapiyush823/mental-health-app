@@ -182,7 +182,7 @@ const Profile = ({userId}:ProfileProps) => {
 
    return (
      <div className="min-h-screen bg-gray-100 p-2">
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+       <div className="grid grid-cols-1  gap-6 max-w-6xl mx-auto">
          {/* Left Section: Profile Details */}
          <div className="lg:col-span-2 bg-white shadow-lg rounded-lg p-6">
            {/* Profile Header */}
@@ -403,29 +403,6 @@ const Profile = ({userId}:ProfileProps) => {
                  Edit Profile
                </button>
              )}
-           </div>
-         </div>
-
-         {/* Right Section: Mood Statistics & Recent Activities */}
-         <div className="bg-white shadow-lg rounded-lg p-6">
-           {/* Mood Statistics */}
-           <h3 className="text-lg font-semibold mb-3">Mood Statistics</h3>
-           <div className="bg-gray-200 h-32 rounded-lg flex items-center justify-center">
-             <p className="text-gray-500">Coming soon...</p>
-           </div>
-
-           {/* Recent Activities */}
-           <h3 className="text-lg font-semibold mt-6 mb-3">Recent Activities</h3>
-           <div className="space-y-2">
-             <p className="text-gray-700">
-               <strong>Mood Check-ins:</strong> 28 days streak
-             </p>
-             <p className="text-gray-700">
-               <strong>Journal Entries:</strong> 12 this month
-             </p>
-             <p className="text-gray-700">
-               <strong>Meditation Sessions:</strong> 8 hours total
-             </p>
            </div>
          </div>
        </div>
