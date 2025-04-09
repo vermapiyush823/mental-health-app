@@ -55,10 +55,10 @@ const Overview = ({ userId }: OverviewProps) => {
           setMoodScore(result.data[result.data.length - 1].score);
           const totalMoodScore = result.data.reduce((acc: number, item: any) => acc + item.score, 0);
           const averageMoodScore = totalMoodScore / result.data.length;
-          setMoodScore(averageMoodScore);
+          setMoodScore(Number(averageMoodScore.toFixed(1)));
           const totalSleep = result.data.reduce((acc: number, item: any) => acc + item.sleep, 0);
           const averageSleep = totalSleep / result.data.length;
-          setSleepQuality(averageSleep);
+          setSleepQuality(Number(averageSleep.toFixed(1)));
           setStressLevel(result.data[0].stress);
           const formattedRecommendations = result.data[0].recommendations.map((rec: any) => rec.recommendation);
           setRecommendations(formattedRecommendations);     
