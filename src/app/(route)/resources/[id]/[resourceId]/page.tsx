@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 
 
 
-const ResourcePage = async () => {
+const ResourcePage = () => {
   
   const params = useParams();
   const resourceId = params.resourceId as string;
