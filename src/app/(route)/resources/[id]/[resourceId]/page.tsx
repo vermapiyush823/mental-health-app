@@ -43,7 +43,7 @@ const ResourcePage = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ resourceId }),
+          body: JSON.stringify({ resourceId}),
         });
         
         if (!response.ok) {
@@ -60,7 +60,7 @@ const ResourcePage = () => {
     };
 
     fetchResourceData();
-  }, [resourceId]);
+  }, [resourceId, userId]);
 
   if (loading) return <div className="text-center p-4">Loading resource...</div>;
   if (error) return <div className="text-center p-4 text-red-500">Error: {error}</div>;
