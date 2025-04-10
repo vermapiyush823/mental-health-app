@@ -29,7 +29,7 @@ interface ResourceData {
 const ResourcePage = () => {
   const params = useParams();
   const resourceId = params.resourceId as string;
-  const userId = params.id as string;
+  const userId = params.userId as string;
   const [resourceData, setResourceData] = useState<ResourceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,7 +43,7 @@ const ResourcePage = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ resourceId}),
+          body: JSON.stringify({ resourceId }),
         });
         
         if (!response.ok) {

@@ -3,7 +3,7 @@ import { getResourceById } from "../../../../../../lib/actions/resource.action";
 
 type Props = {
   params: {
-    id: string;
+    resourceId: string;
   };
 };
 
@@ -12,7 +12,7 @@ export async function GET(
   { params }: Props
 ) {
   try {
-    const resourceId = params.id;
+    const resourceId = params.resourceId;
     
     if (!resourceId) {
       return NextResponse.json(
