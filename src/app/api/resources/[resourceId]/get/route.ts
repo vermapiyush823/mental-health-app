@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getResourceById } from "../../../../../../lib/actions/resource.action";
 
-type Props = {
-  params: {
-    resourceId: string;
-  };
-};
-
 export async function GET(
   req: NextRequest,
-  { params }: Props
+  { params }: { params: { resourceId: string } }
 ) {
   try {
     const resourceId = params.resourceId;
