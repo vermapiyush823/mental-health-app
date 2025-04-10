@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getResourceById } from "../../../../../../lib/actions/resource.action";
+import { getResourceById } from "../../../../../lib/actions/resource.action";
 
-type Props = {
-  params: {
-    id: string;
-  };
-};
-
-export async function GET(
-  req: NextRequest,
-  { params }: Props
-) {
+export async function POST(req: NextRequest) {
   try {
-    const resourceId = params.id;
+    const { resourceId } = await req.json();
     
     if (!resourceId) {
       return NextResponse.json(
@@ -20,21 +11,21 @@ export async function GET(
         { status: 400 }
       );
     }
-    
+
     const result = await getResourceById(resourceId);
     
-    if (!result.success || !result.data) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: "Resource not found" },
+        { error: result.error || "Failed to fetch resource" },
         { status: 404 }
       );
     }
     
     return NextResponse.json(result.data);
   } catch (error: any) {
-    console.error("Error fetching resource by ID:", error);
+    console.error("Error fetching resource:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch resource" },
+      { error: error.message || "An unexpected error occurred" },
       { status: 500 }
     );
   }
