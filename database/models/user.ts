@@ -41,15 +41,15 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      required: ['true']
+      required: true
     },
     location: {
       type: String,
-      required: ['false']
+      required: false
     },
     age: {
       type: Number,
-      required: ['true']
+      required: true
     },
     password: {
       type: String,

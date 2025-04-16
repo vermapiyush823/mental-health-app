@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { ResponsiveLine } from "@nivo/line";
 
-
 interface MentalHealthChartProps {
   chartData: {
     id: string;
@@ -10,30 +9,32 @@ interface MentalHealthChartProps {
     data: { x: string; y: number }[];
   }[];
 }
-const MentalHealthChart = ({chartData}: MentalHealthChartProps) => {
-  const [chartHeight, setChartHeight] = useState(300); // Default height
-    console.log(chartData);
+
+const MentalHealthChart = ({ chartData }: MentalHealthChartProps) => {
+  const [chartHeight, setChartHeight] = useState(300); 
+
   useEffect(() => {
     const handleResize = () => {
-      setChartHeight(window.innerWidth < 768 ? 200 : 300); // Smaller chart for mobile
+      setChartHeight(window.innerWidth < 768 ? 200 : 300); 
     };
 
     handleResize(); // Call on mount
-    window.addEventListener("resize", handleResize); // Listen to resize events
+    window.addEventListener("resize", handleResize); 
 
-    return () => window.removeEventListener("resize", handleResize); // Cleanup
+    return () => window.removeEventListener("resize", handleResize); 
   }, []);
 
   return (
-    <div style={{ height: chartHeight, width: "100%" }}>
+    <div style={{ height: chartHeight, width: "100%", overflow: "visible" }}>
       <ResponsiveLine
-        data={chartData} // Use the prop directly instead of local state
-        margin={{ top: 20, right: 20, bottom: 50, left: 40 }}
+        data={chartData}
+        margin={{ top: 20, right: 50, bottom: 50, left: 40 }} 
         xScale={{ type: "point" }}
         yScale={{ type: "linear", min: 0, max: 10, stacked: false }}
         axisBottom={{
           tickSize: 0,
           tickPadding: 10,
+          tickRotation: -30, 
         }}
         axisLeft={{
           tickSize: 0,

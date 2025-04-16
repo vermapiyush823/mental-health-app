@@ -38,10 +38,13 @@ const Overview = ({ userId }: OverviewProps) => {
           const response = await fetch(`/api/mood-track/get-week-data?userId=${userId}`);
           const result = await response.json();
           const transformedData = result.data.map((item: any) => ({
-            x: new Date(item.date).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+            x: new Date(item.date).toLocaleDateString("en-US",
+              { weekday: "short", month: "short", day: "numeric" 
+                , timeZone: "UTC"
+              },
+            ),
             y: item.score,
           }));
-          
 
           const formattedData = [
             {

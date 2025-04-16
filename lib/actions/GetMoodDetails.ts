@@ -49,14 +49,8 @@ export const getLast7DaysMoodDetails = async (userId: string) => {
             return { success: false, error: "Mood details not found for today" };
         }
 
-        const last7DaysMoodData = moodDetails.moodData.filter((mood:any) => {
-            const moodDate = new Date(mood.date);
-            // return last 7 records
-            return moodDate >= new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
-        }).sort((a:any, b:any) => {
-            return new Date(b.date).getTime() - new Date(a.date).getTime();
-        }
-        ).slice(0, 7).map((mood:any) => {
+        const last7DaysMoodData = moodDetails.moodData.
+        slice(-7).map((mood:any) => {
             return {
                 score : mood.score,
                 date : mood.date,
