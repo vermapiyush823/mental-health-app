@@ -1,12 +1,18 @@
 'use client'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import MentalHealthChart from './Mental_Health_Charts'
 import Overview_single_score from './Overview_single_score'
 import Ai_insights from './Ai_insights'
+import { useTheme } from 'next-themes'
+
 interface OverviewProps {
   userId: string;
 }
 const Overview = ({ userId }: OverviewProps) => {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const isDarkMode = mounted && resolvedTheme === 'dark';
+  
   const [data, setData] = React.useState([
     {
       id: "Mood Score",
@@ -30,6 +36,11 @@ const Overview = ({ userId }: OverviewProps) => {
     'Keep up the good work',
     'You are on the right track'
   ]);
+
+  // Only run on client side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
    useEffect(() => {
       // Fetch data from the server
@@ -78,20 +89,19 @@ const Overview = ({ userId }: OverviewProps) => {
    }, [data]);
 
   return (
-    <div className='flex flex-col gap-y-5 bg-white h-fit  rounded-md p-5'>
+    <div className={`flex flex-col gap-y-5 ${mounted ? (isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900') : 'bg-white text-gray-900'} h-fit rounded-md p-5 transition-colors duration-300`}>
         <h1 className='text-lg font-bold'>Mental Health Overview</h1>
 
         <MentalHealthChart 
             chartData={data}
         />
-        <div className='grid justify-center items-center gap-5 grid-cols-2 sm:grid-cols-3  w-full'>
+        <div className='grid justify-center items-center gap-5 grid-cols-2 sm:grid-cols-3 w-full'>
             <Overview_single_score catgory='Weekly Mood Score' score={moodScore}/>
             <Overview_single_score catgory='Average Sleep Hours' score={sleepQuality}/>
             <Overview_single_score catgory='Stress Level' score={stressLevel}/>
         </div>
         <Ai_insights
             insights={recommendations}
-            
         />
     </div>
   )

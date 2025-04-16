@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Plus from "../../../assets/icons/plus.svg";
 import Trash from "../../../assets/icons/trash-can-10416.svg";
+import { useTheme } from "next-themes";
 
 interface ProfileProps {
   userId: string;
@@ -15,12 +16,20 @@ interface Goal {
 }
 
 const PersonalGoals = ({ userId }: ProfileProps) => {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
   const [goals, setGoals] = useState<Goal[]>([]);
   const [newGoal, setNewGoal] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  // Ensure component is mounted before accessing theme
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch goals on component mount
   useEffect(() => {
@@ -164,8 +173,11 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
     }
   };
 
+  // For safe SSR, use a conditional check for the theme
+  const isDarkMode = mounted && resolvedTheme === 'dark';
+
   return (
-    <div className="flex flex-col gap-y-5 bg-white h-fit rounded-md p-5 shadow-md">
+    <div className={`flex flex-col gap-y-5 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} h-fit rounded-md p-5 shadow-md transition-colors duration-300`}>
       {/* Title */}
       <h1 className="text-lg font-bold">Personal Goals</h1>
 
@@ -173,14 +185,14 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       {/* Loading state */}
-      {isLoading && <p className="text-sm text-gray-500">Loading goals...</p>}
+      {isLoading && <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Loading goals...</p>}
 
       {/* Success message */}
       {message && <p className="text-green-500 text-sm">{message}</p>}
 
       {/* Empty state */}
       {!isLoading && goals.length === 0 && (
-        <p className="text-sm text-gray-500">
+        <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
           You have no goals set. Click the button below to add a new goal.
         </p>
       )}
@@ -188,19 +200,21 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
       {/* Goals List */}
       <div className="flex flex-col gap-y-2">
         {goals.map((goal,index) => (
-          <div key={index} className="flex items-center justify-between">
+          <div key={index} className={`flex items-center justify-between ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} p-1 rounded-md transition-colors duration-200`}>
             <label className="flex items-center gap-x-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={goal.completed}
                 onChange={() => handleToggleGoal(goal.id)}
-                className="w-5 h-5 accent-black cursor-pointer"
+                className={`w-5 h-5 ${isDarkMode ? 'accent-purple-400' : 'accent-black'} cursor-pointer transition-colors duration-300`}
                 disabled={isLoading}
               />
               <span
                 className={`text-sm ${
-                  goal.completed ? "line-through text-gray-500" : "text-gray-800"
-                }`}
+                  goal.completed 
+                    ? `line-through ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`
+                    : isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                } transition-colors duration-300`}
               >
                 {goal.text}
               </span>
@@ -208,10 +222,16 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
            
             <button
               onClick={() => handleRemoveGoal(goal.id)}
-              className="text-gray-500 hover:text-red-500"
+              className={`${isDarkMode ? 'text-gray-400 hover:text-red-400' : 'text-gray-500 hover:text-red-500'} transition-colors duration-300`}
               disabled={isLoading}
             >
-              <Image src={Trash} alt="Trash Icon" width={18} height={18} />
+              <Image 
+                src={Trash} 
+                alt="Trash Icon" 
+                width={18} 
+                height={18}
+                className={`${isDarkMode ? 'opacity-80 filter invert' : ''} transition-all duration-300`}
+              />
             </button>
           </div>
         ))}
@@ -225,25 +245,49 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
             value={newGoal}
             onChange={(e) => setNewGoal(e.target.value)}
             placeholder="Enter new goal..."
-            className="border rounded-md px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-black"
+            className={`border rounded-md px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 ${
+              isDarkMode 
+                ? 'bg-gray-700 border-gray-600 text-gray-100 focus:ring-purple-500' 
+                : 'bg-white border-gray-300 text-gray-900 focus:ring-black'
+            } transition-colors duration-300`}
             disabled={isLoading}
           />
           <button
             onClick={handleAddGoal}
-            className="bg-black text-white flex items-center justify-center gap-x-2 py-2 px-4 rounded-md hover:bg-gray-900 transition disabled:bg-gray-400"
+            className={`${
+              isDarkMode 
+                ? 'bg-purple-600 hover:bg-purple-700' 
+                : 'bg-black hover:bg-gray-900'
+            } text-white flex items-center justify-center gap-x-2 py-2 px-4 rounded-md transition-colors duration-300 disabled:bg-gray-400`}
             disabled={isLoading}
           >
-            <Image src={Plus} alt="Plus Icon" width={18} height={18} />
+            <Image 
+              src={Plus} 
+              alt="Plus Icon" 
+              width={18} 
+              height={18}
+              className={`${isDarkMode ? 'filter brightness-0 invert' : ''} transition-all duration-300`}
+            />
             <span className="text-sm">Add</span>
           </button>
         </div>
       ) : (
         <button
           onClick={() => setIsAdding(true)}
-          className="bg-black text-white flex items-center justify-center gap-x-2 py-2 px-4 rounded-md hover:bg-gray-900 transition disabled:bg-gray-400"
+          className={`${
+            isDarkMode 
+              ? 'bg-purple-600 hover:bg-purple-700' 
+              : 'bg-black hover:bg-gray-900'
+          } text-white flex items-center justify-center gap-x-2 py-2 px-4 rounded-md transition-colors duration-300 disabled:bg-gray-400`}
           disabled={isLoading}
         >
-          <Image src={Plus} alt="Plus Icon" width={18} height={18} />
+          <Image 
+            src={Plus} 
+            alt="Plus Icon" 
+            width={18} 
+            height={18} 
+            className={`${isDarkMode ? 'filter brightness-0 invert' : ''} transition-all duration-300`}
+          />
           <span className="text-sm">Add a new goal</span>
         </button>
       )}

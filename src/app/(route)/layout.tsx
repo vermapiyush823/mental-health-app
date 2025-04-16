@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Header from "@/components/shared/Header";
 import { getUserId } from "../../../lib/auth";
-
+import { useTheme } from 'next-themes';
 export default async function Layout({
   children,
 }: {
@@ -12,7 +12,6 @@ export default async function Layout({
   // Check if the "token" cookie exists
   const cookieStore = await cookies();
   const token = cookieStore.get("token");
-
   if (!token) {
     // Redirect to the sign-in page if the token is missing
     redirect("/sign-in");

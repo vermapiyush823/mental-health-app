@@ -1,8 +1,61 @@
 @import "tailwindcss";
 
+:root {
+  --background: 243, 244, 246; /* Changed to gray-100 for light mode */
+  --foreground: 15, 23, 42;
+  --transition-speed: 300ms; /* Centralized transition speed */
+}
+
+[class="dark"] {
+  --background: 17, 24, 39;
+  --foreground: 241, 245, 249;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+  transition: background-color var(--transition-speed), color var(--transition-speed);
 }
+
+/* Comprehensive transitions for theme switching */
+body, 
+.bg-white, 
+.bg-gray-100,
+.bg-gray-200,
+.bg-gray-800,
+.bg-gray-900,
+.text-gray-600,
+.text-gray-700,
+.text-gray-800,
+.text-gray-900,
+.border-gray-200,
+.border-gray-300,
+.hover\:bg-gray-100,
+.hover\:bg-gray-200,
+button,
+a,
+input,
+textarea,
+select,
+svg,
+.card,
+.modal,
+.sidebar,
+.header,
+.footer,
+.icon,
+.nav-item {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: var(--transition-speed);
+}
+
+/* Ensure all SVG elements transition smoothly */
+svg * {
+  transition: fill var(--transition-speed), stroke var(--transition-speed);
+}
+
 @keyframes fadeInRight {
   from {
     opacity: 0;

@@ -1,7 +1,6 @@
 "use client"; // Ensures client-side rendering in Next.js
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import UserIcon from "../../../assets/icons/user.png";
+import { useTheme } from "next-themes";
 
 interface SupportMember {
   name: string;
@@ -14,6 +13,9 @@ interface SupportNetworkProps {
 }
 
 const SupportNetwork = ({ userId }: SupportNetworkProps) => {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
   // State for managing support members
   const [supportMembers, setSupportMembers] = useState<SupportMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +35,11 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
     email: "",
     phone: "",
   });
+
+  // Ensure the component is mounted before accessing theme
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch support members on component mount
   useEffect(() => {
@@ -209,8 +216,11 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
     setError("");
   };
 
+  // For safe SSR, use a conditional check for the theme
+  const isDarkMode = mounted && resolvedTheme === 'dark';
+
   return (
-    <div className="flex flex-col gap-y-5 bg-white h-fit rounded-md p-5 shadow-md">
+    <div className={`flex flex-col gap-y-5 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} h-fit rounded-md p-5 shadow-md transition-colors duration-300`}>
       {/* Title */}
       <h1 className="text-lg font-bold">Support Network</h1>
 
@@ -221,12 +231,12 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
 
       {/* Loading State */}
       {isLoading && (
-        <p className="text-sm text-gray-500">Loading...</p>
+        <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Loading...</p>
       )}
 
       {/* Show message if no support members exist */}
       {!isLoading && supportMembers.length === 0 && (
-        <p className="text-sm text-gray-500">
+        <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
           You have no support members added. Click the button below to add a new contact.
         </p>
       )}
@@ -234,7 +244,7 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
       {/* List of Support Members */}
       <div className="flex flex-col gap-y-4">
         {supportMembers.map((member, index) => (
-          <div key={index} className="flex items-center justify-between gap-x-3 bg-gray-50 p-3 rounded-md">
+          <div key={index} className={`flex items-center justify-between gap-x-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} p-3 rounded-md transition-colors duration-300`}>
             <div className="flex items-center gap-x-3">
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
@@ -244,20 +254,20 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
               </div>
               <div>
                 <h2 className="font-medium">{member.name || 'Unknown'}</h2>
-                {member.email && <p className="text-sm text-gray-500">{member.email}</p>}
-                {member.phone && <p className="text-sm text-gray-500">{member.phone}</p>}
+                {member.email && <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{member.email}</p>}
+                {member.phone && <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{member.phone}</p>}
               </div>
             </div>
             <div className="flex gap-x-2 gap-y-2 flex-wrap justify-center items-center">
               <button 
                 onClick={() => handleEdit(member)}
-                className="text-xs bg-white w-full text-black px-2 py-1 sm:py-2 rounded hover:bg-gray-100 border"
+                className={`text-xs ${isDarkMode ? 'bg-gray-600 text-gray-100 hover:bg-gray-500' : 'bg-white text-black hover:bg-gray-100'} w-full px-2 py-1 sm:py-2 rounded border transition-colors duration-300`}
               >
                 Edit
               </button>
               <button 
                 onClick={() => handleDelete(member.name)}
-                className="text-xs bg-black w-full text-white px-2 py-1 sm:py-2 rounded hover:bg-black/55 border"
+                className={`text-xs ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-black hover:bg-black/55'} w-full text-white px-2 py-1 sm:py-2 rounded border transition-colors duration-300`}
               >
                 Delete
               </button>
@@ -268,14 +278,14 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
 
       {/* Toggle Add Contact Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-y-3 bg-gray-50 p-3 rounded-md">
+        <form onSubmit={handleSubmit} className={`flex flex-col gap-y-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} p-3 rounded-md transition-colors duration-300`}>
           <input
             type="text"
             name="name"
             value={newMember.name}
             onChange={handleChange}
             placeholder="Enter Name"
-            className="border rounded-md p-2 text-sm w-full"
+            className={`border rounded-md p-2 text-sm w-full ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} transition-colors duration-300`}
           />
           <input
             type="email"
@@ -283,7 +293,7 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
             value={newMember.email}
             onChange={handleChange}
             placeholder="Enter Email"
-            className="border rounded-md p-2 text-sm w-full"
+            className={`border rounded-md p-2 text-sm w-full ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} transition-colors duration-300`}
           />
           <input
             type="tel"
@@ -291,20 +301,20 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
             value={newMember.phone}
             onChange={handleChange}
             placeholder="Enter Phone Number"
-            className="border rounded-md p-2 text-sm w-full"
+            className={`border rounded-md p-2 text-sm w-full ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} transition-colors duration-300`}
           />
           <div className="flex gap-x-2">
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 bg-black text-white py-2 rounded-md font-medium hover:bg-black/55 transition disabled:bg-gray-400"
+              className={`flex-1 ${isDarkMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-black hover:bg-black/55'} text-white py-2 rounded-md font-medium transition-colors duration-300 disabled:bg-gray-600`}
             >
               {isLoading ? "Saving..." : isEditing ? "Update Contact" : "Save Contact"}
             </button>
             <button
               type="button"
               onClick={handleCancel}
-              className="flex-1 bg-gray-200 py-2 rounded-md text-gray-700 font-medium hover:bg-gray-300 transition"
+              className={`flex-1 ${isDarkMode ? 'bg-gray-600 text-gray-100 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} py-2 rounded-md font-medium transition-colors duration-300`}
             >
               Cancel
             </button>
@@ -316,10 +326,23 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
       {!showForm && (
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center justify-center gap-x-2 w-full bg-gray-200 py-2 rounded-md text-gray-700 font-medium hover:bg-gray-300 transition"
+          className={`flex items-center justify-center gap-x-2 w-full ${isDarkMode ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} py-2 rounded-md font-medium transition-colors duration-300`}
           disabled={isLoading}
         >
-          <Image src={UserIcon} alt="User Icon" width={20} height={20} />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"
+            />
+          </svg>
           Add Contact
         </button>
       )}

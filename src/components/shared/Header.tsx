@@ -1,20 +1,27 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Bell from "../../../assets/icons/Bell.svg";
-import Image from "next/image";
-import MenuIcon from "../../../assets/icons/burger-menu-svgrepo-com.svg";
-import CloseIcon from "../../../assets/icons/cross-svgrepo-com.svg";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ThemeSwitcher from "./ThemeSwitcher";
+import { useTheme } from "next-themes";
+
 interface HeaderProps {
   userId: string;
 }
+
 const Header = ({ userId }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [newImg, setNewImg] = useState(
     "https://api.dicebear.com/6.x/avataaars/svg"
   );
   const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+
+  // Ensure component is mounted before accessing theme
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const closeMenu = () => {
     setMenuOpen(false);
@@ -36,7 +43,6 @@ const Header = ({ userId }: HeaderProps) => {
         return;
       }
       const userData = await response.json();
-      console.log("User data:", userData.user.data);
       if (userData.user.data.image) {
         setNewImg(userData.user.data.image);
       }
@@ -72,36 +78,56 @@ const Header = ({ userId }: HeaderProps) => {
     }
   };
 
+  // Define theme-based styles
+  const isDarkMode = mounted && resolvedTheme === 'dark';
+
   return (
-    <nav className="flex border-b bg-white  border-gray-300 items-center h-16 justify-between px-6 w-full">
+    <nav className={`flex border-b items-center h-16 justify-between px-6 w-full ${
+      isDarkMode 
+        ? 'bg-gray-900 border-gray-700 text-white' 
+        : 'bg-white border-gray-300 text-gray-900'
+    }`}>
       {/* Left Side: Logo & Navigation */}
       <div className="flex items-center gap-x-4 sm:gap-x-10 h-full">
-        <h3 className="text-lg font-bold text-indigo-600">
-          LO <span className="text-indigo-800">GO</span>
+        <h3 className={`text-lg font-bold ${
+          isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
+        }`}>
+          LO <span className={isDarkMode ? 'text-indigo-300' : 'text-indigo-800'}>GO</span>
         </h3>
 
         {/* Navigation Links */}
-        <ul
-          className={`absolute top-16 z-50 left-0 w-full bg-white  border-none sm:border-b border-gray-300 sm:static sm:flex sm:items-center sm:gap-x-6 text-gray-600 text-md transition-all duration-300 ease-in-out ${
-            menuOpen ? "flex flex-col py-4 shadow-md" : "hidden sm:flex"
+        <ul className={`absolute top-16 z-50 left-0 w-full border-none sm:border-b sm:static sm:flex sm:items-center sm:gap-x-6 text-md transition-all duration-300 ease-in-out ${
+          isDarkMode 
+            ? 'bg-gray-900 border-gray-700 text-gray-300' 
+            : 'bg-white border-gray-300 text-gray-600'
+          } ${
+            menuOpen ? 'flex flex-col py-4 shadow-md' : 'hidden sm:flex'
           }`}
         >
-          <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
+          <li className={`cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
+            isDarkMode ? 'hover:text-white' : 'hover:text-black'
+          }`}>
             <Link href="/" onClick={closeMenu}>
               Home
             </Link>
           </li>
-          <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
+          <li className={`cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
+            isDarkMode ? 'hover:text-white' : 'hover:text-black'
+          }`}>
             <Link href="/mood-track" onClick={closeMenu}>
               Mood Tracker
             </Link>
           </li>
-          <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
+          <li className={`cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
+            isDarkMode ? 'hover:text-white' : 'hover:text-black'
+          }`}>
             <Link href="/resources" onClick={closeMenu}>
               Resources
             </Link>
           </li>
-          <li className="hover:text-black cursor-pointer px-6 sm:px-0 py-2 sm:py-0">
+          <li className={`cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
+            isDarkMode ? 'hover:text-white' : 'hover:text-black'
+          }`}>
             <Link href="/support" onClick={closeMenu}>
               Support
             </Link>
@@ -113,7 +139,11 @@ const Header = ({ userId }: HeaderProps) => {
                 logout();
                 closeMenu();
               }}
-              className="hover:text-black sm:hidden text-purple-700 cursor-pointer px-6 sm:px-0 py-2 sm:py-0"
+              className={`sm:hidden cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
+                isDarkMode 
+                  ? 'text-purple-400 hover:text-white' 
+                  : 'text-purple-700 hover:text-black'
+              }`}
             >
               Logout
             </button>
@@ -121,12 +151,11 @@ const Header = ({ userId }: HeaderProps) => {
         </ul>
       </div>
 
-      {/* Right Side: Notifications & Profile */}
+      {/* Right Side: Theme Switcher & Profile */}
       <div className="flex items-center gap-x-4 sm:gap-x-6">
-        {/* <button className="bg-black text-white flex gap-x-2 px-4 py-2 rounded-md text-sm items-center">
-          <Image src={Bell} alt="bell" width={18} height={18} />
-          <span>Notifications</span>
-        </button> */}
+        {/* Theme Switcher */}
+        <ThemeSwitcher />
+        
         <Link href="/profile" onClick={closeMenu}>
           <img
             src={newImg}
@@ -134,25 +163,33 @@ const Header = ({ userId }: HeaderProps) => {
             className="w-10 h-10 rounded-full object-cover"
           />
         </Link>
-        {/* Mobile Menu Button (Hidden on Large Screens) */}
+        
         <button
           type="button"
           onClick={() => logout()}
-          className="bg-black text-white px-4 py-2 rounded-md sm:flex hidden"
+          className={`px-4 py-2 rounded-md sm:flex hidden ${
+            isDarkMode 
+              ? 'bg-gray-700 text-white' 
+              : 'bg-black text-white'
+          }`}
         >
           Logout
         </button>
+        
         <button
-          className="sm:hidden text-gray-700"
+          className={`sm:hidden ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} transition-colors`}
           onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle menu"
         >
-          <Image
-            src={menuOpen ? CloseIcon : MenuIcon}
-            alt="menu toggle"
-            width={24}
-            height={24}
-          />
-          {}
+          {menuOpen ? (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          )}
         </button>
       </div>
     </nav>
