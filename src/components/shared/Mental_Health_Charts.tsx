@@ -50,7 +50,7 @@ const MentalHealthChart = ({ chartData }: MentalHealthChartProps) => {
     >
       <ResponsiveLine
         data={chartData}
-        margin={{ top: 20, right: 50, bottom: 50, left: 40 }} 
+        margin={{ top: 20, right: 0, bottom: 50, left: 40 }} 
         xScale={{ type: "point" }}
         yScale={{ type: "linear", min: 0, max: 10, stacked: false }}
         axisBottom={{
