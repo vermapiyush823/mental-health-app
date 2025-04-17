@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface HeaderProps {
   userId: string;
@@ -11,16 +12,21 @@ interface HeaderProps {
 
 const Header = ({ userId }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [newImg, setNewImg] = useState(
-    "https://api.dicebear.com/6.x/avataaars/svg"
-  );
+  const [newImg, setNewImg] = useState("https://api.dicebear.com/6.x/avataaars/svg");
   const [error, setError] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [activePage, setActivePage] = useState("/");
   const { resolvedTheme } = useTheme();
+  const router = useRouter();
 
   // Ensure component is mounted before accessing theme
   useEffect(() => {
     setMounted(true);
+    
+    // Set active page based on current URL
+    if (typeof window !== "undefined") {
+      setActivePage(window.location.pathname);
+    }
   }, []);
 
   const closeMenu = () => {
@@ -56,7 +62,6 @@ const Header = ({ userId }: HeaderProps) => {
     fetchUserDetails();
   }, []);
 
-  const router = useRouter();
   const logout = async () => {
     try {
       const response = await fetch("/api/auth/logout", {
@@ -74,124 +79,249 @@ const Header = ({ userId }: HeaderProps) => {
         router.push("/sign-in");
       }
     } catch (err) {
-      console.error("Error during sign-up:", err);
+      console.error("Error during logout:", err);
     }
   };
 
   // Define theme-based styles
   const isDarkMode = mounted && resolvedTheme === 'dark';
+  
+  // Navigation items with links
+  const navItems = [
+    { name: "Home", href: "/" },
+    { name: "Mood Tracker", href: "/mood-track" },
+    { name: "Resources", href: "/resources" },
+    { name: "Support", href: "/support" }
+  ];
+  
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.05 
+      } 
+    }
+  };
+  
+  const navItemVariants = {
+    hidden: { y: -10, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 20
+      }
+    }
+  };
 
+  const mobileMenuVariants = {
+    hidden: { opacity: 0, y: -20, height: 0 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      height: 'auto',
+      transition: {
+        duration: 0.3,
+        staggerChildren: 0.1,
+        when: "beforeChildren"
+      }
+    },
+    exit: {
+      opacity: 0,
+      y: -20,
+      height: 0,
+      transition: {
+        duration: 0.3
+      }
+    }
+  };
+
+  // Helper function to determine if a nav item is active
+  const isActive = (href: string) => {
+    return activePage === href;
+  };
+  
   return (
-    <nav className={`flex border-b items-center h-16 justify-between px-6 w-full ${
+    <nav className={`sticky top-0 z-50 backdrop-blur-sm ${
       isDarkMode 
-        ? 'bg-gray-900 border-gray-700 text-white' 
-        : 'bg-white border-gray-300 text-gray-900'
-    }`}>
-      {/* Left Side: Logo & Navigation */}
-      <div className="flex items-center gap-x-4 sm:gap-x-10 h-full">
-        <h3 className={`text-lg font-bold ${
-          isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
-        }`}>
-          LO <span className={isDarkMode ? 'text-indigo-300' : 'text-indigo-800'}>GO</span>
-        </h3>
-
-        {/* Navigation Links */}
-        <ul className={`absolute top-16 z-50 left-0 w-full border-none sm:border-b sm:static sm:flex sm:items-center sm:gap-x-6 text-md transition-all duration-300 ease-in-out ${
-          isDarkMode 
-            ? 'bg-gray-900 border-gray-700 text-gray-300' 
-            : 'bg-white border-gray-300 text-gray-600'
-          } ${
-            menuOpen ? 'flex flex-col py-4 shadow-md' : 'hidden sm:flex'
-          }`}
-        >
-          <li className={`cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
-            isDarkMode ? 'hover:text-white' : 'hover:text-black'
-          }`}>
-            <Link href="/" onClick={closeMenu}>
-              Home
-            </Link>
-          </li>
-          <li className={`cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
-            isDarkMode ? 'hover:text-white' : 'hover:text-black'
-          }`}>
-            <Link href="/mood-track" onClick={closeMenu}>
-              Mood Tracker
-            </Link>
-          </li>
-          <li className={`cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
-            isDarkMode ? 'hover:text-white' : 'hover:text-black'
-          }`}>
-            <Link href="/resources" onClick={closeMenu}>
-              Resources
-            </Link>
-          </li>
-          <li className={`cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
-            isDarkMode ? 'hover:text-white' : 'hover:text-black'
-          }`}>
-            <Link href="/support" onClick={closeMenu}>
-              Support
-            </Link>
-          </li>
-          <li>
-            <button
+        ? 'bg-gray-800/90 border-gray-700 text-white' 
+        : 'bg-white/90 border-gray-200 text-gray-900'
+    } border-b shadow-sm w-full transition-colors duration-300`}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/">
+            <div className={`flex items-center relative`}>
+              <motion.span 
+                className={`text-xl font-extrabold ${
+                  isDarkMode ? 'text-purple-300' : 'text-indigo-600'
+                } tracking-wide`}
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400 }}
+              >
+                MindWell
+                <span className={isDarkMode ? 'text-pink-300' : 'text-pink-500'}>.</span>
+                <motion.div 
+                  className={`absolute -bottom-1 left-0 h-0.5 w-full ${
+                    isDarkMode ? 'bg-purple-500' : 'bg-indigo-400'
+                  }`}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                  style={{ transformOrigin: "left" }}
+                ></motion.div>
+              </motion.span>
+            </div>
+          </Link>
+          
+          {/* Desktop Navigation */}
+          <motion.div 
+            className="hidden md:flex"
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+          >
+            <motion.ul className="flex space-x-6 items-center">
+              {navItems.map((item) => (
+                <motion.li key={item.name} variants={navItemVariants}>
+                  <Link 
+                    href={item.href} 
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${
+                      isActive(item.href)
+                        ? isDarkMode 
+                          ? 'text-purple-300 bg-gray-700/50' 
+                          : 'text-indigo-700 bg-indigo-50'
+                        : isDarkMode
+                          ? 'text-gray-300 hover:text-purple-300 hover:bg-gray-700/30' 
+                          : 'text-gray-700 hover:text-indigo-700 hover:bg-gray-100/80'
+                    }`}
+                    onClick={() => setActivePage(item.href)}
+                  >
+                    {item.name}
+                  </Link>
+                </motion.li>
+              ))}
+            </motion.ul>
+          </motion.div>
+          
+          {/* Right side items: theme switcher, profile, and logout */}
+          <div className="flex items-center space-x-4">
+            <ThemeSwitcher />
+            
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative"
+            >
+              <Link 
+                href="/profile"
+                className="flex items-center"
+              >
+                <div className="relative overflow-hidden rounded-full border-2 border-purple-300/50 shadow-md">
+                  <img
+                    src={newImg}
+                    alt="Profile"
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent"></div>
+                </div>
+              </Link>
+            </motion.div>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               type="button"
-              onClick={() => {
-                logout();
-                closeMenu();
-              }}
-              className={`sm:hidden cursor-pointer px-6 sm:px-0 py-2 sm:py-0 ${
+              onClick={() => logout()}
+              className={`hidden md:flex items-center px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 shadow-sm ${
                 isDarkMode 
-                  ? 'text-purple-400 hover:text-white' 
-                  : 'text-purple-700 hover:text-black'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white' 
+                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'
               }`}
             >
               Logout
-            </button>
-          </li>
-        </ul>
+            </motion.button>
+            
+            {/* Mobile menu button */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="md:hidden"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+              )}
+            </motion.button>
+          </div>
+        </div>
       </div>
-
-      {/* Right Side: Theme Switcher & Profile */}
-      <div className="flex items-center gap-x-4 sm:gap-x-6">
-        {/* Theme Switcher */}
-        <ThemeSwitcher />
-        
-        <Link href="/profile" onClick={closeMenu}>
-          <img
-            src={newImg}
-            alt="Profile"
-            className="w-10 h-10 rounded-full object-cover"
-          />
-        </Link>
-        
-        <button
-          type="button"
-          onClick={() => logout()}
-          className={`px-4 py-2 rounded-md sm:flex hidden ${
-            isDarkMode 
-              ? 'bg-gray-700 text-white' 
-              : 'bg-black text-white'
-          }`}
-        >
-          Logout
-        </button>
-        
-        <button
-          className={`sm:hidden ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} transition-colors`}
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          {menuOpen ? (
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            </svg>
-          )}
-        </button>
-      </div>
+      
+      {/* Mobile Navigation Menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className={`md:hidden ${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow-lg`}
+            variants={mobileMenuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <motion.ul variants={containerVariants} className="px-4 py-3 space-y-2">
+              {navItems.map((item) => (
+                <motion.li key={item.name} variants={navItemVariants}>
+                  <Link 
+                    href={item.href} 
+                    className={`block px-4 py-3 rounded-md text-sm font-medium transition-colors duration-300 ${
+                      isActive(item.href)
+                        ? isDarkMode 
+                          ? 'text-purple-300 bg-gray-700' 
+                          : 'text-indigo-700 bg-indigo-50'
+                        : isDarkMode
+                          ? 'text-gray-300 hover:text-purple-300 hover:bg-gray-700' 
+                          : 'text-gray-700 hover:text-indigo-700 hover:bg-gray-100'
+                    }`}
+                    onClick={() => {
+                      setActivePage(item.href);
+                      closeMenu();
+                    }}
+                  >
+                    {item.name}
+                  </Link>
+                </motion.li>
+              ))}
+              
+              <motion.li variants={navItemVariants}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    closeMenu();
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-purple-300 hover:text-purple-200 bg-gray-700 hover:bg-gray-600' 
+                      : 'text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100'
+                  }`}
+                >
+                  Logout
+                </button>
+              </motion.li>
+            </motion.ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };

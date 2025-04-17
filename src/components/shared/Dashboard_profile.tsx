@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
+import { motion } from 'framer-motion'
 import { PencilSquareIcon } from '@heroicons/react/24/outline'
 
 interface ProfileProps {
@@ -40,19 +41,45 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
   // Define dynamic mood styles based on current theme
   const isDarkMode = mounted && resolvedTheme === 'dark';
   
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.5,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        type: "spring", 
+        stiffness: 100 
+      }
+    }
+  };
+  
   // Dynamic mood styles based on the current theme
   const getMoodStyle = (score: number) => {
+    const baseStyle = "font-medium shadow-md transition-all duration-300";
     const styles = {
-      1: isDarkMode ? "text-red-300 bg-red-900" : "text-red-800 bg-red-200", // Terrible
-      2: isDarkMode ? "text-red-300 bg-red-900" : "text-red-700 bg-red-200", // Very Bad
-      3: isDarkMode ? "text-orange-300 bg-orange-900" : "text-orange-700 bg-orange-200", // Bad
-      4: isDarkMode ? "text-yellow-300 bg-yellow-900" : "text-yellow-800 bg-yellow-200", // Unhappy
-      5: isDarkMode ? "text-gray-300 bg-gray-800" : "text-gray-700 bg-gray-200", // Neutral
-      6: isDarkMode ? "text-green-300 bg-green-900" : "text-green-700 bg-green-200", // Okay
-      7: isDarkMode ? "text-green-300 bg-green-900" : "text-green-600 bg-green-200", // Good
-      8: isDarkMode ? "text-blue-300 bg-blue-900" : "text-blue-600 bg-blue-200", // Very Good
-      9: isDarkMode ? "text-blue-300 bg-blue-900" : "text-blue-700 bg-blue-200", // Great
-      10: isDarkMode ? "text-purple-300 bg-purple-900" : "text-purple-700 bg-purple-200" // Excellent
+      1: isDarkMode ? `${baseStyle} text-red-300 bg-red-900/50 border border-red-700` : `${baseStyle} text-red-800 bg-red-100 border border-red-200`, // Terrible
+      2: isDarkMode ? `${baseStyle} text-red-300 bg-red-900/50 border border-red-700` : `${baseStyle} text-red-700 bg-red-100 border border-red-200`, // Very Bad
+      3: isDarkMode ? `${baseStyle} text-orange-300 bg-orange-900/50 border border-orange-700` : `${baseStyle} text-orange-700 bg-orange-100 border border-orange-200`, // Bad
+      4: isDarkMode ? `${baseStyle} text-yellow-300 bg-yellow-900/50 border border-yellow-700` : `${baseStyle} text-yellow-800 bg-yellow-100 border border-yellow-200`, // Unhappy
+      5: isDarkMode ? `${baseStyle} text-gray-300 bg-gray-800/50 border border-gray-600` : `${baseStyle} text-gray-700 bg-gray-100 border border-gray-200`, // Neutral
+      6: isDarkMode ? `${baseStyle} text-green-300 bg-green-900/50 border border-green-700` : `${baseStyle} text-green-700 bg-green-100 border border-green-200`, // Okay
+      7: isDarkMode ? `${baseStyle} text-green-300 bg-green-900/50 border border-green-700` : `${baseStyle} text-green-600 bg-green-100 border border-green-200`, // Good
+      8: isDarkMode ? `${baseStyle} text-blue-300 bg-blue-900/50 border border-blue-700` : `${baseStyle} text-blue-600 bg-blue-100 border border-blue-200`, // Very Good
+      9: isDarkMode ? `${baseStyle} text-blue-300 bg-blue-900/50 border border-blue-700` : `${baseStyle} text-blue-700 bg-blue-100 border border-blue-200`, // Great
+      10: isDarkMode ? `${baseStyle} text-purple-300 bg-purple-900/50 border border-purple-700` : `${baseStyle} text-purple-700 bg-purple-100 border border-purple-200` // Excellent
     };
     
     return styles[score as keyof typeof styles] || 
@@ -127,63 +154,129 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
   }, []);
   
   // Define theme-dependent styles
-  const cardBgClass = isDarkMode ? "bg-gray-800" : "bg-white";
+  const cardBgClass = isDarkMode 
+    ? "bg-gray-800/90 backdrop-blur-sm border border-gray-700/50" 
+    : "bg-white/90 backdrop-blur-sm shadow-xl border border-gray-100";
   const headingClass = isDarkMode ? "text-white" : "text-gray-900";
   const subTextClass = isDarkMode ? "text-gray-400" : "text-gray-500";
-  const buttonBgClass = isDarkMode ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-black";
+  const buttonBgClass = isDarkMode 
+    ? "bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white" 
+    : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white";
   const pulseClass = isDarkMode ? "bg-gray-600" : "bg-gray-400";
   
   return (
-    <div className={`flex flex-col shadow-md md:flex-row justify-between ${cardBgClass} w-[95%] rounded-md p-5 items-center md:items-start gap-4`}>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className={`flex flex-col shadow-lg md:flex-row justify-between ${cardBgClass} w-[95%] rounded-xl p-6 items-center md:items-start gap-4 relative overflow-hidden`}
+    >
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 pointer-events-none"></div>
    
       {/* Profile Section */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 w-full md:w-1/2">
+      <motion.div 
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row items-center sm:items-start gap-5 w-full md:w-1/2 z-10"
+      >
         {loading ? (
           <div className={`animate-pulse ${pulseClass} w-20 h-20 sm:w-24 sm:h-24 rounded-full`}></div>
         ) : (
-          <img 
-            src={newImg} 
-            alt="Profile" 
-            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover" 
-          />
+          <div className="relative">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="relative overflow-hidden rounded-full border-2 border-purple-300/50 shadow-md"
+            >
+              <img 
+                src={newImg} 
+                alt="Profile" 
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent"></div>
+            </motion.div>
+          </div>
         )}
         <div className="text-center sm:text-left">
           {loading ? (
-            <div className={`animate-pulse ${pulseClass} h-5 w-20 rounded-md`}></div>
+            <div className={`animate-pulse ${pulseClass} h-7 w-36 rounded-md mb-2`}></div>
           ) : (
-            <h2 className={`text-xl font-bold ${headingClass}`}>{name}</h2>
+            <motion.h2 
+              variants={itemVariants}
+              className={`text-xl font-bold tracking-wide ${headingClass}`}
+            >
+              {name}
+            </motion.h2>
           )}              
           {loading ? (
-            <div className={`animate-pulse ${pulseClass} h-4 w-36 rounded-md mt-1`}></div>
+            <div className={`animate-pulse ${pulseClass} h-4 w-36 rounded-md mt-1 mb-3`}></div>
           ) : (
-            <p className={`text-md ${subTextClass}`}>Member since {memberDate}</p>
+            <motion.p 
+              variants={itemVariants}
+              className={`text-md ${subTextClass}`}
+            >
+              Member since {memberDate}
+            </motion.p>
           )}
           {loading ? (
-            <div className={`animate-pulse ${pulseClass} h-6 w-28 rounded-xl mt-2`}></div>
+            <div className={`animate-pulse ${pulseClass} h-8 w-36 rounded-xl mt-2`}></div>
           ) : (
-            <p className={`text-sm font-bold rounded-xl py-1 px-2 mt-2 inline-block ${getMoodStyle(todayMoodScore)}`}>
-              Feeling {todayMoodLabel} Today
-            </p>
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="mt-1"
+            >
+              <span className={`text-sm rounded-xl py-1.5 px-4 ${getMoodStyle(todayMoodScore)}`}>
+                Feeling {todayMoodLabel} Today
+              </span>
+            </motion.div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Edit Profile Button */}
-      <div className="w-full md:w-auto flex justify-center md:justify-end">
+      <motion.div 
+        variants={itemVariants} 
+        className="w-full md:w-auto flex justify-center md:justify-end items-center z-10"
+      >
         {loading ? (
-          <div className={`animate-pulse ${pulseClass} h-9 w-24 rounded-md`}></div>
+          <div className={`animate-pulse ${pulseClass} h-10 w-32 rounded-lg`}></div>
         ) : (
-          <Link 
-            className={`${buttonBgClass} flex items-center gap-x-2 px-4 py-2 rounded-md transition-colors`}
-            href="/profile"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <PencilSquareIcon className="w-5 h-5" />
-            <span className="text-sm">Edit Profile</span>
-          </Link>
+            <Link 
+              className={`${buttonBgClass} flex items-center gap-x-2 px-6 py-2.5 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl`}
+              href="/profile"
+            >
+              <PencilSquareIcon className="w-5 h-5" />
+              <span className="text-sm font-medium">Edit Profile</span>
+            </Link>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
+
+// Helper function to get mood color indicator based on score
+const getMoodColorIndicator = (score: number) => {
+  const colorMap: {[key: number]: string} = {
+    1: "bg-red-500", // Terrible
+    2: "bg-red-500", // Very Bad
+    3: "bg-orange-500", // Bad
+    4: "bg-yellow-500", // Unhappy
+    5: "bg-gray-400", // Neutral
+    6: "bg-green-400", // Okay
+    7: "bg-green-500", // Good
+    8: "bg-blue-400", // Very Good
+    9: "bg-blue-500", // Great
+    10: "bg-purple-500" // Excellent
+  };
+  
+  return colorMap[score] || "bg-gray-400";
+};
 
 export default Dashboard_profile

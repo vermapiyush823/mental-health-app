@@ -89,7 +89,7 @@ const Overview = ({ userId }: OverviewProps) => {
    }, [data]);
 
   return (
-    <div className={`flex flex-col gap-y-5 ${mounted ? (isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900') : 'bg-white text-gray-900'} h-fit rounded-md p-5 transition-colors duration-300`}>
+    <div className={`flex flex-col gap-y-5 justify-center ${mounted ? (isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900') : 'bg-white text-gray-900'} h-fit rounded-md p-5 transition-colors duration-300`}>
         <h1 className='text-lg font-bold'>Mental Health Overview</h1>
 
         <MentalHealthChart 
