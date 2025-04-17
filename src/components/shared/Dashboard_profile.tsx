@@ -19,7 +19,7 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [mounted, setMounted] = useState<boolean>(false);
   const { resolvedTheme } = useTheme();
-  
+  console.log(todayMoodScore)
   // Make sure component is mounted before using theme
   useEffect(() => {
     setMounted(true);
@@ -114,13 +114,6 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
             })
           : "Unknown"
       );
-      const moodScores = userData?.user?.data?.moodScore || [7]; // Ensure it's an array
-      const lastMood = moodScores.length > 0 ? moodScores[moodScores.length - 1] : null;
-              
-      if (lastMood) {
-        setTodayMoodScore(lastMood?.score);
-        setTodayMoodLabel(moodLabels[lastMood?.score]);
-      } 
       setLoading(false);
               
     }
@@ -138,10 +131,17 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
         throw new Error("Failed to fetch mood details");
       }
       const data = await response.json();
-      const moodData = data.data;
-      console.log("Mood Data", moodData);
-      setTodayMoodScore(Math.round(moodData));
-      setTodayMoodLabel(moodLabels[Math.round(moodData)]);
+      console.log("API Response:", data);
+      
+      if (data.success && data.data) {
+        const moodData = data.data;
+        console.log("Mood Data:", moodData);
+        
+        setTodayMoodScore(Math.round(moodData)-1);
+        setTodayMoodLabel(moodLabels[Math.round(moodData)-1]);
+      } else {
+        console.error("No mood data available or request unsuccessful");
+      }
     } catch (error) {
       console.error("Error fetching mood details:", error);
     }
@@ -152,6 +152,8 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
     fetchUserDetails();
     fetchMoodDetails();
   }, []);
+
+    
   
   // Define theme-dependent styles
   const cardBgClass = isDarkMode 
@@ -163,7 +165,8 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
     ? "bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white" 
     : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white";
   const pulseClass = isDarkMode ? "bg-gray-600" : "bg-gray-400";
-  
+
+
   return (
     <motion.div 
       initial="hidden"
@@ -227,7 +230,7 @@ const Dashboard_profile = ({userId}:ProfileProps) => {
               whileTap={{ scale: 0.95 }}
               className="mt-1"
             >
-              <span className={`text-sm rounded-xl py-1.5 px-4 ${getMoodStyle(todayMoodScore)}`}>
+              <span className={`text-sm rounded-xl py-1.5 px-4 ${getMoodStyle(Math.round(todayMoodScore))}`}>
                 Feeling {todayMoodLabel} Today
               </span>
             </motion.div>
