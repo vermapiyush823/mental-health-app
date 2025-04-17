@@ -1,6 +1,8 @@
 "use client"
 import React from 'react'
-import {RecommendationIcons} from '../../lib/RecommendationIcons';
+import { RecommendationIcons } from '../../lib/RecommendationIcons';
+import { useTheme } from "next-themes";
+import { motion } from 'framer-motion';
 
 interface Recommendations {
     priority: string;
@@ -13,31 +15,74 @@ interface RecommendationProps {
 }
 
 const Recommendation = ({ recommendations }: RecommendationProps) => {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const isDarkMode = mounted && resolvedTheme === 'dark';
+  
+  // Animation variants for recommendations
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
+  
   // Check if recommendations exist and has items
   if (!recommendations || recommendations.length === 0) {
-    return <div className="text-center py-4">No recommendations available</div>;
+    return <div className={`text-center py-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>No recommendations available</div>;
   }
 
   return (
-    <div>
-      <h3 className="text-xl font-bold mb-4">Recommendations</h3>
+    <div className="w-full">
+      <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Recommendations</h3>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {recommendations.map((rec, index) => (
-          <div 
+          <motion.div 
             key={`recommendation-${index}`}
-            className={`bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 ${
-              rec.priority === 'High' ? 'border-l-4 border-l-red-500' : 
-              rec.priority === 'Medium' ? 'border-l-4 border-l-yellow-500' : 
-              'border-l-4 border-l-green-500'
+            variants={itemVariants}
+            className={`${
+              isDarkMode 
+                ? 'bg-gray-800/80 border-gray-700 hover:bg-gray-700/90' 
+                : 'bg-white border-gray-100 hover:shadow-md'
+            } p-5 rounded-xl border shadow-sm transition-all duration-300 transform hover:-translate-y-1 ${
+              rec.priority === 'High' 
+                ? `${isDarkMode ? 'border-l-4 border-l-red-600' : 'border-l-4 border-l-red-500'}` 
+                : rec.priority === 'Medium' 
+                  ? `${isDarkMode ? 'border-l-4 border-l-amber-600' : 'border-l-4 border-l-amber-500'}` 
+                  : `${isDarkMode ? 'border-l-4 border-l-green-600' : 'border-l-4 border-l-green-500'}`
             }`}
-            style={{animationDelay: `${index * 0.1}s`}}
           >
             <div className="flex items-start min-h-[60px]">
               <div className={`mr-4 ${
-                rec.priority === 'High' ? 'text-red-600' : 
-                rec.priority === 'Medium' ? 'text-yellow-600' : 
-                rec.priority === 'Low' ? 'text-green-600' : ''
+                rec.priority === 'High' ? 'text-red-500' : 
+                rec.priority === 'Medium' ? 'text-amber-500' : 
+                'text-green-500'
               }`}>
                 {
                   rec.category === 'Exercise' ? RecommendationIcons.exercise:
@@ -46,32 +91,37 @@ const Recommendation = ({ recommendations }: RecommendationProps) => {
                   rec.category === 'Outdoor Time' ? RecommendationIcons.outdoor:
                   rec.category === 'Stress Management' ? RecommendationIcons.stress:
                   rec.category === 'Hydration' ? RecommendationIcons.water :
-                  rec.category === 'Social Interaction' ? RecommendationIcons.outdoor :
                   rec.category === 'Screen Time' ? RecommendationIcons.screen :
                   ''
                 }
               </div>
               <div>
                 <div className="flex items-center">
-                  <span className={` text-xs px-2 py-1 rounded-full ${
-                    rec.priority === 'High' ? 'bg-red-100 text-red-800' : 
-                    rec.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 
-                    rec.priority === 'Low' ? 'bg-green-100 text-green-800' : ''
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    rec.priority === 'High' 
+                      ? `${isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-100 text-red-800'}` 
+                      : rec.priority === 'Medium' 
+                        ? `${isDarkMode ? 'bg-amber-900/50 text-amber-300' : 'bg-amber-100 text-amber-800'}` 
+                        : `${isDarkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-800'}`
                   }`}>
                     {rec.priority}
                   </span>
-                  <h4 className={`text-sm font-semibold ml-2  ${
-                    rec.priority === 'High' ? ' text-red-700' : 
-                    rec.priority === 'Medium' ? ' text-yellow-800' : 
-                    rec.priority === 'Low' ? ' text-green-700' : ''
+                  <h4 className={`text-sm font-semibold ml-2 ${
+                    rec.priority === 'High' 
+                      ? `${isDarkMode ? 'text-red-400' : 'text-red-700'}` 
+                      : rec.priority === 'Medium' 
+                        ? `${isDarkMode ? 'text-amber-400' : 'text-amber-800'}` 
+                        : `${isDarkMode ? 'text-green-400' : 'text-green-700'}`
                   }`}>{rec.category}</h4>
                 </div>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">{rec.recommendation}</p>
+                <p className={`text-xs sm:text-sm mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {rec.recommendation}
+                </p>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }
