@@ -311,8 +311,8 @@ const Header = ({ userId }: HeaderProps) => {
                   }}
                   className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors duration-300 ${
                     isDarkMode 
-                      ? 'text-purple-300 hover:text-purple-200 bg-gray-700 hover:bg-gray-600' 
-                      : 'text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100'
+                      ? 'text-blue-300 hover:text-blue-200 bg-gray-700 hover:bg-gray-600' 
+                      : 'text-blue-700 hover:text-indigo-800 bg-blue-50 hover:bg-indigo-100'
                   }`}
                 >
                   Logout

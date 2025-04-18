@@ -12,7 +12,7 @@ const Page = async() => {
     <div className="flex flex-col mt-4 sm:mt-8 mb-8 gap-y-5 w-full items-center">
       <Dashboard_profile userId={userId}/>
       <div className="w-[95%] grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className='col-span-1 sm:col-span-2  w-full'>
+          <div className='col-span-1 sm:col-span-2 w-full grid grid-cols-1'>
           <Overview userId={userId}/>
           </div>
         <div className="col-span-1 flex flex-col w-full gap-y-5">

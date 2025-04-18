@@ -138,7 +138,7 @@ const Overview = ({ userId }: OverviewProps) => {
     isDarkMode 
       ? 'bg-gray-800/90 backdrop-blur-sm border border-gray-700/50 text-gray-100' 
       : 'bg-white/90 backdrop-blur-sm border border-gray-100 text-gray-900'
-  } h-fit rounded-lg p-5 transition-colors duration-300 shadow-lg relative overflow-hidden`;
+  } h-full rounded-lg p-5 transition-colors duration-300 shadow-lg relative overflow-hidden`;
 
   // Add subtle gradient overlay
   const gradientOverlay = `absolute inset-0 bg-gradient-to-br ${
@@ -156,6 +156,7 @@ const Overview = ({ userId }: OverviewProps) => {
       animate="visible"
       variants={containerVariants}
       className={containerClasses}
+
     >
       {/* Gradient overlay */}
       <div className={gradientOverlay}></div>
