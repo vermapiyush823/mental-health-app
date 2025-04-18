@@ -373,7 +373,7 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
             variants={itemVariants}
             whileHover={{ scale: 1.01 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-x-3 gap-y-3 ${
+            className={`flex flex-col sm:flex-row overflow-x-scroll sm:items-center justify-between gap-x-3 gap-y-3 ${
               isDarkMode ? 'bg-gray-700/80 border border-gray-600/30' : 'bg-gray-50 border border-gray-100'
             } p-4 rounded-lg transition-colors duration-300`}
           >
@@ -386,7 +386,7 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
               </div>
               <div>
                 <h2 className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{member.name || 'Unknown'}</h2>
-                <div className="flex flex-col sm:flex-row gap-x-4 gap-y-1 mt-1">
+                <div className="flex flex-col gap-x-4 gap-y-1 mt-1">
                   {member.email && (
                     <div className="flex items-center gap-x-1">
                       <EnvelopeIcon className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -403,7 +403,7 @@ const SupportNetwork = ({ userId }: SupportNetworkProps) => {
               </div>
             </div>
             
-            <div className="flex gap-2 ml-auto">
+            <div className="flex sm:flex-col gap-2 ml-auto">
               <motion.button 
                 variants={buttonVariants}
                 whileHover="hover"

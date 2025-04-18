@@ -647,7 +647,7 @@ const fetchUserDetails = async () => {
       ) : (
         <div 
           id="chat-messages-container"
-          className={`flex-1 overflow-y-auto p-4 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100'} space-y-4 rounded-md scroll-smooth z-10`}
+          className={`flex-1 overflow-y-auto p-4 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50 border border-gray-200'} space-y-4 rounded-md scroll-smooth z-10`}
         >
           {messages.map((msg, index) => (
             <motion.div 
@@ -668,7 +668,9 @@ const fetchUserDetails = async () => {
                 }`}>
                   {msg.text}
                 </div>
-                {msg.role === "user" && <Image src={userImg} alt="User Icon" width={35} height={35} className="h-8 w-8 ml-2 rounded-full" />}
+                {msg.role === "user" && <Image src={userImg} alt="User Icon" width={35} height={35} className={`h-10 w-10 border-2 border-purple-300/50 shadow-md 
+              '} 
+                 ml-2 rounded-full`} />}
               </div>
             </motion.div>
           ))}
