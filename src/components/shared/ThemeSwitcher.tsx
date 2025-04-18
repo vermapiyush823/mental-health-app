@@ -28,8 +28,8 @@ export default function ThemeSwitcher() {
         onClick={() => setTheme(isDark ? 'light' : 'dark')}
         className={`relative rounded-full p-2 transition-all duration-500 ease-in-out flex items-center justify-center ${
           isDark 
-            ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
-            : 'bg-black text-white hover:bg-gray-600'
+            ? 'bg-gradient-to-r from-purple-600/90 to-indigo-700/90 text-purple-100 hover:shadow-purple-500/20 hover:shadow-xl' 
+            : 'bg-gradient-to-r from-indigo-600/90 to-purple-600/90 text-white hover:shadow-indigo-500/20 hover:shadow-xl'
         }`}
         aria-label="Toggle dark mode"
       >
