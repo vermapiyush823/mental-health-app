@@ -184,10 +184,11 @@ const Profile = ({userId}:ProfileProps) => {
                   );
                   const moodScores = userData?.user?.data?.moodScore || [7]; // Ensure it's an array
                   const lastMood = moodScores.length > 0 ? moodScores[moodScores.length - 1] : null;
-                  
+                  console.log("Mood Scores", moodScores);
+                  console.log("Last Mood", lastMood);
                   if (lastMood) {
-                    setTodayMoodScore(lastMood?.score);
-                    setTodayMoodLabel(moodLabels[lastMood?.score]);
+                    setTodayMoodScore(lastMood?.score-1);
+                    setTodayMoodLabel(moodLabels[lastMood?.score-1]);
                 } 
                 setLoading(false);
         }
@@ -206,8 +207,8 @@ const Profile = ({userId}:ProfileProps) => {
             const data = await response.json();
             const moodData = data.data;
             console.log("Mood Data", moodData);
-            setTodayMoodScore(Math.round(moodData));
-            setTodayMoodLabel(moodLabels[Math.round(moodData)]);
+            setTodayMoodScore(Math.round(moodData)-1);
+            setTodayMoodLabel(moodLabels[Math.round(moodData)-1]);
         } catch (error) {
             console.error("Error fetching mood details:", error);
         }
@@ -251,9 +252,9 @@ const Profile = ({userId}:ProfileProps) => {
        initial="hidden"
        animate="visible"
        variants={containerVariants}
-       className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} p-4 md:p-6`}
+       className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} p-2 sm:p-4 md:p-6`}
      >
-       <div className="max-w-6xl mx-auto space-y-6">
+       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
          {/* Main Profile Card */}
          <motion.div 
            variants={itemVariants}
@@ -263,16 +264,16 @@ const Profile = ({userId}:ProfileProps) => {
            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 pointer-events-none"></div>
            
            {/* Profile Header */}
-           <div className="p-6 md:p-8">
-             <div className="flex flex-col sm:flex-row items-center gap-6">
+           <div className="p-4 sm:p-6 md:p-8">
+             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                {loading ? (
-                 <div className={`animate-pulse ${pulseClass} w-32 h-32 rounded-full`}></div>
+                 <div className={`animate-pulse ${pulseClass} w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full`}></div>
                ) : (
                 <div className="relative">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
-                    className="relative w-32 h-32 overflow-hidden rounded-full border-2 border-purple-300/50 shadow-lg"
+                    className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 overflow-hidden rounded-full border-2 border-purple-300/50 shadow-lg"
                   >
                     <img
                       src={newImg}
@@ -294,23 +295,23 @@ const Profile = ({userId}:ProfileProps) => {
                 </div>
                )}
                
-               <div className="text-center sm:text-left flex-1">
+               <div className="text-center sm:text-left flex-1 mt-3 sm:mt-0">
                  {loading ? (
-                   <div className="animate-pulse space-y-3">
-                     <div className={`h-8 ${pulseClass} rounded-md w-48 mx-auto sm:mx-0`}></div>
-                     <div className={`h-4 ${pulseClass} rounded-md w-32 mx-auto sm:mx-0`}></div>
-                     <div className={`h-6 ${pulseClass} rounded-md w-24 mx-auto sm:mx-0`}></div>
+                   <div className="animate-pulse space-y-2 sm:space-y-3">
+                     <div className={`h-7 sm:h-8 ${pulseClass} rounded-md w-40 sm:w-48 mx-auto sm:mx-0`}></div>
+                     <div className={`h-4 ${pulseClass} rounded-md w-28 sm:w-32 mx-auto sm:mx-0`}></div>
+                     <div className={`h-6 ${pulseClass} rounded-md w-20 sm:w-24 mx-auto sm:mx-0`}></div>
                    </div>
                  ) : (
                    <>
-                     <motion.h2 variants={itemVariants} className={`text-3xl font-bold ${headingClass}`}>
+                     <motion.h2 variants={itemVariants} className={`text-2xl sm:text-3xl font-bold ${headingClass}`}>
                        {name}
                      </motion.h2>
-                     <motion.p variants={itemVariants} className={`${subTextClass}`}>
+                     <motion.p variants={itemVariants} className={`text-sm sm:text-base ${subTextClass}`}>
                        Member since {memberDate}
                      </motion.p>
                      <motion.div variants={itemVariants} className="mt-2">
-                       <span className={`inline-block px-4 py-1.5 rounded-xl ${getMoodStyle(todayMoodScore)}`}>
+                       <span className={`inline-block text-sm px-3 sm:px-4 py-1 sm:py-1.5 rounded-xl ${getMoodStyle(todayMoodScore)}`}>
                          Feeling {todayMoodLabel} Today
                        </span>
                      </motion.div>
@@ -328,9 +329,9 @@ const Profile = ({userId}:ProfileProps) => {
                      />
                      <label
                        htmlFor="profile-picture-upload"
-                       className={`cursor-pointer ${buttonGradientClass} flex items-center gap-2 px-4 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300`}
+                       className={`cursor-pointer ${buttonGradientClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base`}
                      >
-                       <CameraIcon className="w-5 h-5" />
+                       <CameraIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                        <span>Change Picture</span>
                      </label>
                    </div>
@@ -340,9 +341,9 @@ const Profile = ({userId}:ProfileProps) => {
                      whileTap={{ scale: 0.95 }}
                      onClick={handleProfilePictureUpdate}
                      disabled={!selectedImage}
-                     className={`${secondaryButtonClass} flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-300 ${!selectedImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                     className={`${secondaryButtonClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-300 text-sm sm:text-base ${!selectedImage ? 'opacity-50 cursor-not-allowed' : ''}`}
                    >
-                     <ArrowUpTrayIcon className="w-5 h-5" />
+                     <ArrowUpTrayIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                      <span>Upload</span>
                    </motion.button>
                  </motion.div>
@@ -351,31 +352,31 @@ const Profile = ({userId}:ProfileProps) => {
            </div>
 
            {/* Personal Information */}
-           <motion.div variants={itemVariants} className="px-6 md:px-8 pb-6">
-             <div className="flex justify-between items-center mb-4">
-               <h3 className={`text-2xl font-semibold ${headingClass}`}>Personal Information</h3>
+           <motion.div variants={itemVariants} className="px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 md:pb-8">
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
+               <h3 className={`text-xl sm:text-2xl font-semibold ${headingClass}`}>Personal Information</h3>
                
                {/* Edit/Save Buttons */}
-               <div className="flex gap-3">
+               <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
                  {enableEdit ? (
                    <>
                      <motion.button
                        whileHover={{ scale: 1.05 }}
                        whileTap={{ scale: 0.95 }}
-                       className={`${secondaryButtonClass} flex items-center gap-2 px-4 py-2 rounded-lg`}
+                       className={`${secondaryButtonClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base flex-1 sm:flex-none justify-center`}
                        onClick={() => setEnableEdit(false)}
                      >
-                       <XMarkIcon className="w-5 h-5" />
+                       <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                        <span>Cancel</span>
                      </motion.button>
                      
                      <motion.button
                        whileHover={{ scale: 1.05 }}
                        whileTap={{ scale: 0.95 }}
-                       className={`${buttonGradientClass} flex items-center gap-2 px-4 py-2 rounded-lg shadow-md`}
+                       className={`${buttonGradientClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-md text-sm sm:text-base flex-1 sm:flex-none justify-center`}
                        onClick={handleSave}
                      >
-                       <CheckIcon className="w-5 h-5" />
+                       <CheckIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                        <span>Save</span>
                      </motion.button>
                    </>
@@ -383,117 +384,119 @@ const Profile = ({userId}:ProfileProps) => {
                    <motion.button
                      whileHover={{ scale: 1.05 }}
                      whileTap={{ scale: 0.95 }}
-                     className={`${buttonGradientClass} flex items-center gap-2 px-4 py-2 rounded-lg shadow-md`}
+                     className={`${buttonGradientClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-md text-sm sm:text-base w-full sm:w-auto justify-center`}
                      onClick={() => setEnableEdit(true)}
                    >
-                     <PencilSquareIcon className="w-5 h-5" />
+                     <PencilSquareIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                      <span>Edit Profile</span>
                    </motion.button>
                  )}
                </div>
              </div>
              
-             <div className="overflow-x-auto">
-               <table className="w-full text-lg">
-                 <tbody>
-                   <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                     <td className={`p-4 font-bold whitespace-nowrap ${headingClass}`}>Email:</td>
-                     <td className="p-4">
-                       {loading ? (
-                         <div className={`animate-pulse h-6 ${pulseClass} rounded-md w-3/4`}></div>
-                       ) : enableEdit ? (
-                         <input
-                           type="email"
-                           value={email}
-                           onChange={(e) => setEmail(e.target.value)}
-                           className={`${inputClass} p-2 rounded-md w-full outline-none`}
-                         />
-                       ) : (
-                         <div className={`break-words overflow-hidden ${subTextClass}`}>{email}</div>
-                       )}
-                     </td>
-                   </tr>
-                   
-                   <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                     <td className={`p-4 font-bold whitespace-nowrap ${headingClass}`}>Phone:</td>
-                     <td className="p-4">
-                       {loading ? (
-                         <div className={`animate-pulse h-6 ${pulseClass} rounded-md w-3/4`}></div>
-                       ) : enableEdit ? (
-                         <input
-                           type="text"
-                           value={phone}
-                           onChange={(e) => setPhone(e.target.value)}
-                           className={`${inputClass} p-2 rounded-md w-full outline-none`}
-                         />
-                       ) : (
-                         <div className={`break-words overflow-hidden ${subTextClass}`}>{phone}</div>
-                       )}
-                     </td>
-                   </tr>
-                   
-                   <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                     <td className={`p-4 font-bold whitespace-nowrap ${headingClass}`}>Location:</td>
-                     <td className="p-4">
-                       {loading ? (
-                         <div className={`animate-pulse h-6 ${pulseClass} rounded-md w-3/4`}></div>
-                       ) : enableEdit ? (
-                         <input
-                           type="text"
-                           value={location}
-                           onChange={(e) => setLocation(e.target.value)}
-                           className={`${inputClass} p-2 rounded-md w-full outline-none`}
-                         />
-                       ) : (
-                         <div className={`break-words overflow-hidden ${subTextClass}`}>{location}</div>
-                       )}
-                     </td>
-                   </tr>
-                   
-                   <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                     <td className={`p-4 font-bold whitespace-nowrap ${headingClass}`}>Age:</td>
-                     <td className="p-4">
-                       {loading ? (
-                         <div className={`animate-pulse h-6 ${pulseClass} rounded-md w-16`}></div>
-                       ) : enableEdit ? (
-                         <input
-                           type="number"
-                           value={age}
-                           onChange={(e) => setAge(e.target.value)}
-                           className={`${inputClass} p-2 rounded-md w-full outline-none`}
-                           min="1"
-                           max="120"
-                         />
-                       ) : (
-                         <div className={`break-words overflow-hidden ${subTextClass}`}>{age}</div>
-                       )}
-                     </td>
-                   </tr>
-                   
-                   <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                     <td className={`p-4 font-bold whitespace-nowrap ${headingClass}`}>Gender:</td>
-                     <td className="p-4">
-                       {loading ? (
-                         <div className={`animate-pulse h-6 ${pulseClass} rounded-md w-32`}></div>
-                       ) : enableEdit ? (
-                         <select
-                           title="gender"
-                           value={gender}
-                           onChange={(e) => setGender(e.target.value)}
-                           className={`${inputClass} p-2 rounded-md w-full outline-none`}
-                         >
-                           <option value="Male">Male</option>
-                           <option value="Female">Female</option>
-                           <option value="Other">Other</option>
-                           <option value="Prefer not to say">Prefer not to say</option>
-                         </select>
-                       ) : (
-                         <div className={`break-words overflow-hidden ${subTextClass}`}>{gender}</div>
-                       )}
-                     </td>
-                   </tr>
-                 </tbody>
-               </table>
+             <div className="overflow-x-auto -mx-4 sm:mx-0">
+               <div className="min-w-[640px] sm:min-w-0"> {/* Force horizontal scroll on very small screens */}
+                 <table className="w-full text-sm sm:text-base md:text-lg">
+                   <tbody>
+                     <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                       <td className={`p-3 sm:p-4 font-bold whitespace-nowrap ${headingClass}`}>Email:</td>
+                       <td className="p-3 sm:p-4">
+                         {loading ? (
+                           <div className={`animate-pulse h-5 sm:h-6 ${pulseClass} rounded-md w-3/4`}></div>
+                         ) : enableEdit ? (
+                           <input
+                             type="email"
+                             value={email}
+                             onChange={(e) => setEmail(e.target.value)}
+                             className={`${inputClass} p-1.5 sm:p-2 rounded-md w-full outline-none text-sm sm:text-base`}
+                           />
+                         ) : (
+                           <div className={`break-words overflow-hidden ${subTextClass}`}>{email}</div>
+                         )}
+                       </td>
+                     </tr>
+                     
+                     <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                       <td className={`p-3 sm:p-4 font-bold whitespace-nowrap ${headingClass}`}>Phone:</td>
+                       <td className="p-3 sm:p-4">
+                         {loading ? (
+                           <div className={`animate-pulse h-5 sm:h-6 ${pulseClass} rounded-md w-3/4`}></div>
+                         ) : enableEdit ? (
+                           <input
+                             type="text"
+                             value={phone}
+                             onChange={(e) => setPhone(e.target.value)}
+                             className={`${inputClass} p-1.5 sm:p-2 rounded-md w-full outline-none text-sm sm:text-base`}
+                           />
+                         ) : (
+                           <div className={`break-words overflow-hidden ${subTextClass}`}>{phone}</div>
+                         )}
+                       </td>
+                     </tr>
+                     
+                     <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                       <td className={`p-3 sm:p-4 font-bold whitespace-nowrap ${headingClass}`}>Location:</td>
+                       <td className="p-3 sm:p-4">
+                         {loading ? (
+                           <div className={`animate-pulse h-5 sm:h-6 ${pulseClass} rounded-md w-3/4`}></div>
+                         ) : enableEdit ? (
+                           <input
+                             type="text"
+                             value={location}
+                             onChange={(e) => setLocation(e.target.value)}
+                             className={`${inputClass} p-1.5 sm:p-2 rounded-md w-full outline-none text-sm sm:text-base`}
+                           />
+                         ) : (
+                           <div className={`break-words overflow-hidden ${subTextClass}`}>{location}</div>
+                         )}
+                       </td>
+                     </tr>
+                     
+                     <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                       <td className={`p-3 sm:p-4 font-bold whitespace-nowrap ${headingClass}`}>Age:</td>
+                       <td className="p-3 sm:p-4">
+                         {loading ? (
+                           <div className={`animate-pulse h-5 sm:h-6 ${pulseClass} rounded-md w-16`}></div>
+                         ) : enableEdit ? (
+                           <input
+                             type="number"
+                             value={age}
+                             onChange={(e) => setAge(e.target.value)}
+                             className={`${inputClass} p-1.5 sm:p-2 rounded-md w-full outline-none text-sm sm:text-base`}
+                             min="1"
+                             max="120"
+                           />
+                         ) : (
+                           <div className={`break-words overflow-hidden ${subTextClass}`}>{age}</div>
+                         )}
+                       </td>
+                     </tr>
+                     
+                     <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                       <td className={`p-3 sm:p-4 font-bold whitespace-nowrap ${headingClass}`}>Gender:</td>
+                       <td className="p-3 sm:p-4">
+                         {loading ? (
+                           <div className={`animate-pulse h-5 sm:h-6 ${pulseClass} rounded-md w-32`}></div>
+                         ) : enableEdit ? (
+                           <select
+                             title="gender"
+                             value={gender}
+                             onChange={(e) => setGender(e.target.value)}
+                             className={`${inputClass} p-1.5 sm:p-2 rounded-md w-full outline-none text-sm sm:text-base`}
+                           >
+                             <option value="Male">Male</option>
+                             <option value="Female">Female</option>
+                             <option value="Other">Other</option>
+                             <option value="Prefer not to say">Prefer not to say</option>
+                           </select>
+                         ) : (
+                           <div className={`break-words overflow-hidden ${subTextClass}`}>{gender}</div>
+                         )}
+                       </td>
+                     </tr>
+                   </tbody>
+                 </table>
+               </div>
              </div>
            </motion.div>
          </motion.div>
@@ -501,22 +504,22 @@ const Profile = ({userId}:ProfileProps) => {
          {/* Preferences Card */}
          <motion.div 
            variants={itemVariants}
-           className={`${cardBgClass} rounded-xl p-6 md:p-8 relative`}
+           className={`${cardBgClass} rounded-xl p-4 sm:p-6 md:p-8 relative`}
          >
            {/* Subtle gradient overlay */}
            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 pointer-events-none"></div>
            
-           <h3 className={`text-2xl font-semibold mb-5 ${headingClass}`}>Preferences</h3>
+           <h3 className={`text-xl sm:text-2xl font-semibold mb-4 sm:mb-5 ${headingClass}`}>Preferences</h3>
            
-           <div className="space-y-4 z-10 relative">
+           <div className="space-y-3 sm:space-y-4 z-10 relative">
              <motion.div 
                variants={itemVariants}
                className="flex items-center justify-between"
              >
-               <p className={subTextClass}>Email Notifications</p>
+               <p className={`text-sm sm:text-base ${subTextClass}`}>Email Notifications</p>
                <button
                  onClick={() => setEmailNotifications(!emailNotifications)}
-                 className={`w-12 h-6 flex items-center rounded-full transition p-1 ${
+                 className={`w-10 sm:w-12 h-5 sm:h-6 flex items-center rounded-full transition p-0.5 sm:p-1 ${
                    emailNotifications 
                      ? isDarkMode ? "bg-purple-600" : "bg-indigo-600" 
                      : isDarkMode ? "bg-gray-700" : "bg-gray-300"
@@ -524,7 +527,7 @@ const Profile = ({userId}:ProfileProps) => {
                >
                  <div
                    className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all duration-300 ${
-                     emailNotifications ? "translate-x-6" : "translate-x-0"
+                     emailNotifications ? "translate-x-5 sm:translate-x-6" : "translate-x-0"
                    }`}
                  ></div>
                </button>
@@ -534,10 +537,10 @@ const Profile = ({userId}:ProfileProps) => {
                variants={itemVariants}
                className="flex items-center justify-between"
              >
-               <p className={subTextClass}>SMS Updates</p>
+               <p className={`text-sm sm:text-base ${subTextClass}`}>SMS Updates</p>
                <button
                  onClick={() => setSmsUpdates(!smsUpdates)}
-                 className={`w-12 h-6 flex items-center rounded-full p-1 transition ${
+                 className={`w-10 sm:w-12 h-5 sm:h-6 flex items-center rounded-full p-0.5 sm:p-1 transition ${
                    smsUpdates 
                      ? isDarkMode ? "bg-purple-600" : "bg-indigo-600" 
                      : isDarkMode ? "bg-gray-700" : "bg-gray-300"
@@ -545,7 +548,7 @@ const Profile = ({userId}:ProfileProps) => {
                >
                  <div
                    className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all duration-300 ${
-                     smsUpdates ? "translate-x-6" : "translate-x-0"
+                     smsUpdates ? "translate-x-5 sm:translate-x-6" : "translate-x-0"
                    }`}
                  ></div>
                </button>
