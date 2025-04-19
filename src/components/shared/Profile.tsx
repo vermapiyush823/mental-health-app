@@ -98,6 +98,8 @@ const Profile = ({userId}:ProfileProps) => {
     
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [newImg, setNewImg] = useState<string>("https://api.dicebear.com/6.x/avataaars/svg");
+    const [isUploading, setIsUploading] = useState<boolean>(false);
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -110,28 +112,51 @@ const Profile = ({userId}:ProfileProps) => {
     const handleProfilePictureUpdate = async () => {
         if (!selectedImage) return;
 
-        const formData = new FormData();
-        formData.append("file", selectedImage);
-        formData.append("userId", userId);
-
         try {
+            setIsUploading(true);
+            setUploadProgress(0);
+            
+            // Create simulated upload progress for better UX
+            const progressInterval = setInterval(() => {
+                setUploadProgress(prev => {
+                    // Cap at 90% until we get actual completion
+                    return prev < 90 ? prev + 10 : prev;
+                });
+            }, 300);
+            
+            const formData = new FormData();
+            formData.append("file", selectedImage);
+            formData.append("userId", userId);
+
             const response = await fetch("/api/update/image", {
                 method: "POST",
                 body: formData,
             });
 
+            clearInterval(progressInterval);
+            
             if (response.ok) {
+                setUploadProgress(100); // Complete the progress
+                
                 const data = await response.json();
                 console.log("Profile picture updated successfully", data.url);
                 setNewImgUpdated(true);
-                setTimeout(() => setNewImgUpdated(false), 3000);
+                setTimeout(() => {
+                    setNewImgUpdated(false);
+                    setIsUploading(false);
+                    setUploadProgress(0);
+                }, 1500);
 
                 setNewImg(data.url.url); // Update with new image from server
             } else {
+                setIsUploading(false);
+                setUploadProgress(0);
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Error updating profile picture");
             }
         } catch (error) {
+            setIsUploading(false);
+            setUploadProgress(0);
             console.error("Failed to update profile picture ", error);
         }
     };
@@ -271,16 +296,31 @@ const Profile = ({userId}:ProfileProps) => {
                ) : (
                 <div className="relative">
                   <motion.div
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={isUploading ? undefined : { scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                     className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 overflow-hidden rounded-full border-2 border-purple-300/50 shadow-lg"
                   >
                     <img
                       src={newImg}
                       alt="User Profile"
-                      className="w-full h-full object-cover"
+                      className={`w-full h-full object-cover ${isUploading ? 'opacity-50' : ''}`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent"></div>
+                    
+                    {/* Upload Progress Overlay */}
+                    {isUploading && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 z-10">
+                        <div className="w-3/4 h-2 bg-gray-300/50 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-white transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-white text-xs mt-1 font-medium">
+                          {uploadProgress}%
+                        </span>
+                      </div>
+                    )}
                   </motion.div>
                   
                   <motion.div 
@@ -326,10 +366,11 @@ const Profile = ({userId}:ProfileProps) => {
                        onChange={handleImageChange}
                        className="hidden"
                        id="profile-picture-upload"
+                       disabled={isUploading}
                      />
                      <label
                        htmlFor="profile-picture-upload"
-                       className={`cursor-pointer ${buttonGradientClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base`}
+                       className={`cursor-pointer ${buttonGradientClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                      >
                        <CameraIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                        <span>Change Picture</span>
@@ -337,14 +378,26 @@ const Profile = ({userId}:ProfileProps) => {
                    </div>
                    
                    <motion.button
-                     whileHover={{ scale: 1.05 }}
-                     whileTap={{ scale: 0.95 }}
+                     whileHover={selectedImage && !isUploading ? { scale: 1.05 } : undefined}
+                     whileTap={(!isUploading && selectedImage) ? { scale: 0.95 } : undefined}
                      onClick={handleProfilePictureUpdate}
-                     disabled={!selectedImage}
-                     className={`${secondaryButtonClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-300 text-sm sm:text-base ${!selectedImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                     disabled={!selectedImage || isUploading}
+                     className={`${secondaryButtonClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-300 text-sm sm:text-base ${(!selectedImage || isUploading) ? 'opacity-50 cursor-not-allowed' : ''}`}
                    >
-                     <ArrowUpTrayIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                     <span>Upload</span>
+                     {isUploading ? (
+                       <>
+                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                         </svg>
+                         <span>Uploading...</span>
+                       </>
+                     ) : (
+                       <>
+                         <ArrowUpTrayIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                         <span>Upload</span>
+                       </>
+                     )}
                    </motion.button>
                  </motion.div>
                </div>
