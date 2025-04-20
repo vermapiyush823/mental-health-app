@@ -9,6 +9,7 @@ interface User {
   location: string;
   age: number;
   password: string;
+  notificationPreference: string; // New field for notification preferences
   supportMembers: { name: string; email: string , phone: string}[];
   personalGoals: { id: string; description: string; completed: boolean }[];
   personalizedResources: { id: string}[];
@@ -54,6 +55,11 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
+    },
+    notificationPreference: {
+      type: String,
+      enum: ['email', 'sms', 'both', 'none'],
+      default: 'email'
     },
     supportMembers: [{
       name: String,

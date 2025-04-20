@@ -162,18 +162,21 @@ const Profile = ({userId}:ProfileProps) => {
     };
       
     const [emailNotifications, setEmailNotifications] = useState(true);
-   const [smsUpdates, setSmsUpdates] = useState(false);
-   const [enableEdit, setEnableEdit] = useState(false);
-   const [email, setEmail] = useState("piyush@gmail.com");
-   const [phone, setPhone] = useState("+91 1234567890");
-   const [location, setLocation] = useState("Delhi, India");
-   const [gender, setGender] = useState("Prefer not to say");
-   const [age, setAge] = useState("25");
-   const [memberDate, setMemberDate] = useState("January 2024");
+    const [smsUpdates, setSmsUpdates] = useState(false);
+    const [notificationPreference, setNotificationPreference] = useState("email");
+    const [enableEdit, setEnableEdit] = useState(false);
+    const [enableNotificationEdit, setEnableNotificationEdit] = useState(false);
+    const [email, setEmail] = useState("piyush@gmail.com");
+    const [phone, setPhone] = useState("+91 1234567890");
+    const [location, setLocation] = useState("Delhi, India");
+    const [gender, setGender] = useState("Prefer not to say");
+    const [age, setAge] = useState("25");
+    const [memberDate, setMemberDate] = useState("January 2024");
     const [name, setName] = useState("John Doe");      
     const [todayMoodScore, setTodayMoodScore] = useState(7);
     const [todayMoodLabel, setTodayMoodLabel] = useState("Good");
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     
     const fetchUserDetails = async () => {
         try{
@@ -199,6 +202,16 @@ const Profile = ({userId}:ProfileProps) => {
                 setAge(userData.user.data.age);
                 setName(userData.user.data.name);
                 setNewImg(userData.user.data.image?userData.user.data.image:newImg);
+                
+                // Get notification preference and set toggle states accordingly
+                const userNotifPref = userData.user.data.notificationPreference||'none';
+                setNotificationPreference(userNotifPref);
+                
+                // Set toggle states based on notification preference
+                setEmailNotifications(userNotifPref === 'email' || userNotifPref === 'both');
+                setSmsUpdates(userNotifPref === 'sms' || userNotifPref === 'both');
+                
+                
                 setMemberDate(
                     userData.user.data.createdAt
                       ? new Date(userData.user.data.createdAt).toLocaleDateString("en-US", {
@@ -250,25 +263,75 @@ const Profile = ({userId}:ProfileProps) => {
 
    // Save changes and exit edit mode
    const handleSave = async () => {
-     setEnableEdit(false);
      try {
        const response = await fetch("/api/update/details", {
          method: "POST",
          headers: {
            "Content-Type": "application/json",
          },
-         body: JSON.stringify({userId, email, phone, location, gender, age}),
+         body: JSON.stringify({
+           userId, 
+           email, 
+           phone, 
+           location, 
+           gender, 
+           age, 
+           notificationPreference
+         }),
        });
        
-       if (!response.ok) {
-         const errorData = await response.json();
-         console.error("Error:", errorData.message);
+       const data = await response.json();
+       
+       if (!data.success) {
+         setError(data.error || "An error occurred while saving your changes");
+         console.error("Error:", data.error);
          return;
        }
+       
        console.log("Changes saved successfully!");
+       setError(null);
+       setEnableEdit(false);
 
      } catch (err) {
        console.error("Error during updating details", err);
+       setError("An unexpected error occurred. Please try again.");
+     }
+   };
+
+   // Save notification preferences
+   const handleSaveNotifications = async () => {
+     try {
+       const response = await fetch("/api/update/details", {
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json",
+         },
+         body: JSON.stringify({
+           userId,
+           email,
+           phone,
+           location, 
+           gender, 
+           age, 
+           notificationPreference
+         }),
+       });
+       
+       const data = await response.json();
+       
+       if (!data.success) {
+         setError(data.error || "An error occurred while saving your notification preferences");
+         console.error("Error:", data.error);
+         return;
+       }
+       
+       console.log("Notification preferences saved successfully!");
+       setError(null);
+       setEnableNotificationEdit(false);
+
+     } catch (err) {
+       console.error("Error during updating notification preferences", err);
+       setError("An unexpected error occurred. Please try again.");
      }
    };
 
@@ -447,8 +510,14 @@ const Profile = ({userId}:ProfileProps) => {
                </div>
              </div>
              
+             {error && (
+               <div className="mb-4 p-3 sm:p-4 rounded-md bg-red-100 text-red-800 border border-red-200">
+                 {error}
+               </div>
+             )}
+
              <div className="overflow-x-auto -mx-4 sm:mx-0">
-               <div className="min-w-[640px] sm:min-w-0"> {/* Force horizontal scroll on very small screens */}
+               <div className="min-w-[440px] sm:min-w-0"> {/* Force horizontal scroll on very small screens */}
                  <table className="w-full text-sm sm:text-base md:text-lg">
                    <tbody>
                      <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
@@ -562,21 +631,80 @@ const Profile = ({userId}:ProfileProps) => {
            {/* Subtle gradient overlay */}
            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 pointer-events-none"></div>
            
-           <h3 className={`text-xl sm:text-2xl font-semibold mb-4 sm:mb-5 ${headingClass}`}>Preferences</h3>
+           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
+             <h3 className={`text-xl sm:text-2xl font-semibold ${headingClass}`}>Preferences</h3>
+             
+             {/* Edit/Save Buttons */}
+             <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+               {enableNotificationEdit ? (
+                 <>
+                   <motion.button
+                     whileHover={{ scale: 1.05 }}
+                     whileTap={{ scale: 0.95 }}
+                     className={`${secondaryButtonClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base flex-1 sm:flex-none justify-center`}
+                     onClick={() => setEnableNotificationEdit(false)}
+                   >
+                     <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                     <span>Cancel</span>
+                   </motion.button>
+                   
+                   <motion.button
+                     whileHover={{ scale: 1.05 }}
+                     whileTap={{ scale: 0.95 }}
+                     className={`${buttonGradientClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-md text-sm sm:text-base flex-1 sm:flex-none justify-center`}
+                     onClick={handleSaveNotifications}
+                   >
+                     <CheckIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                     <span>Save</span>
+                   </motion.button>
+                 </>
+               ) : (
+                 <motion.button
+                   whileHover={{ scale: 1.05 }}
+                   whileTap={{ scale: 0.95 }}
+                   className={`${buttonGradientClass} flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-md text-sm sm:text-base w-full sm:w-auto justify-center`}
+                   onClick={() => setEnableNotificationEdit(true)}
+                 >
+                   <PencilSquareIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                   <span>Edit Preferences</span>
+                 </motion.button>
+               )}
+             </div>
+           </div>
            
-           <div className="space-y-3 sm:space-y-4 z-10 relative">
+           <motion.div 
+             variants={itemVariants}
+             className="space-y-3 sm:space-y-4 z-10 relative"
+           >
              <motion.div 
                variants={itemVariants}
                className="flex items-center justify-between"
              >
                <p className={`text-sm sm:text-base ${subTextClass}`}>Email Notifications</p>
                <button
-                 onClick={() => setEmailNotifications(!emailNotifications)}
+                 onClick={() => {
+                   if (!enableNotificationEdit) return;
+                   
+                   const newEmailState = !emailNotifications;
+                   setEmailNotifications(newEmailState);
+                   
+                   // Update notification preference based on both toggle states
+                   if (newEmailState && smsUpdates) {
+                     setNotificationPreference('both');
+                   } else if (newEmailState) {
+                     setNotificationPreference('email');
+                   } else if (smsUpdates) {
+                     setNotificationPreference('sms');
+                   } else {
+                     setNotificationPreference('none');
+                   }
+                 }}
+                 disabled={!enableNotificationEdit}
                  className={`w-10 sm:w-12 h-5 sm:h-6 flex items-center rounded-full transition p-0.5 sm:p-1 ${
                    emailNotifications 
                      ? isDarkMode ? "bg-purple-600" : "bg-indigo-600" 
                      : isDarkMode ? "bg-gray-700" : "bg-gray-300"
-                 }`}
+                 } ${!enableNotificationEdit ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                >
                  <div
                    className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all duration-300 ${
@@ -585,19 +713,36 @@ const Profile = ({userId}:ProfileProps) => {
                  ></div>
                </button>
              </motion.div>
-
+  
              <motion.div 
                variants={itemVariants}
                className="flex items-center justify-between"
              >
                <p className={`text-sm sm:text-base ${subTextClass}`}>SMS Updates</p>
                <button
-                 onClick={() => setSmsUpdates(!smsUpdates)}
+                 onClick={() => {
+                   if (!enableNotificationEdit) return;
+                   
+                   const newSmsState = !smsUpdates;
+                   setSmsUpdates(newSmsState);
+                   
+                   // Update notification preference based on both toggle states
+                   if (emailNotifications && newSmsState) {
+                     setNotificationPreference('both');
+                   } else if (emailNotifications) {
+                     setNotificationPreference('email');
+                   } else if (newSmsState) {
+                     setNotificationPreference('sms');
+                   } else {
+                     setNotificationPreference('none');
+                   }
+                 }}
+                 disabled={!enableNotificationEdit}
                  className={`w-10 sm:w-12 h-5 sm:h-6 flex items-center rounded-full p-0.5 sm:p-1 transition ${
                    smsUpdates 
                      ? isDarkMode ? "bg-purple-600" : "bg-indigo-600" 
                      : isDarkMode ? "bg-gray-700" : "bg-gray-300"
-                 }`}
+                 } ${!enableNotificationEdit ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                >
                  <div
                    className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all duration-300 ${
@@ -606,7 +751,22 @@ const Profile = ({userId}:ProfileProps) => {
                  ></div>
                </button>
              </motion.div>
-           </div>
+             
+             <motion.div 
+               variants={itemVariants}
+               className="border-t border-gray-200 dark:border-gray-700 pt-3"
+             >
+               <p className={`text-xs ${subTextClass}`}>
+                 {notificationPreference === 'both' 
+                   ? 'You will receive notifications via both email and SMS.' 
+                   : notificationPreference === 'email'
+                     ? 'You will only receive email notifications.'
+                     : notificationPreference === 'sms'
+                       ? 'You will only receive SMS notifications.' 
+                       : 'All notifications are currently disabled.'}
+               </p>
+             </motion.div>
+           </motion.div>
          </motion.div>
        </div>
      </motion.div>
