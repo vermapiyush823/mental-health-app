@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
+import ThemeSwitcher from "@/components/shared/ThemeSwitcher";
 
 const SignUpPage = () => {
   const [name, setFullName] = useState("");
@@ -130,7 +131,7 @@ const SignUpPage = () => {
         variants={containerVariants}
         className={`auth-content relative z-10 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} p-8 rounded-2xl shadow-2xl w-full max-w-lg mx-6 backdrop-blur-md bg-opacity-80 dark:bg-opacity-30 border border-white/10`}
       >
-        <motion.div variants={itemVariants} className="flex justify-center mb-6">
+        <motion.div variants={itemVariants} className="flex justify-between mb-6">
           <div className={`relative text-3xl font-extrabold ${isDarkMode ? 'text-purple-300' : 'text-indigo-600'} tracking-wider`}>
             <motion.span
               initial={{ opacity: 0, y: 10 }}
@@ -141,8 +142,8 @@ const SignUpPage = () => {
               MindWell
               <span className={`${isDarkMode ? 'text-pink-300' : 'text-pink-500'}`}>.</span>
             </motion.span>
-            <div className={`absolute -bottom-1 left-0 h-1 w-full ${isDarkMode ? 'bg-purple-500' : 'bg-indigo-400'} transform scale-x-0 origin-left animate-slideRight`}></div>
           </div>
+          <ThemeSwitcher />
         </motion.div>
 
         <motion.h2 variants={itemVariants} className="text-xl font-medium text-center mb-6">Create Your Account</motion.h2>
@@ -150,70 +151,76 @@ const SignUpPage = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <motion.div variants={itemVariants}>
             <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Full Name</label>
-            <div className={`relative group ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+            <div className={`relative group`}>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setFullName(e.target.value)}
-                className={`block w-full px-4 py-2.5 border ${
-                  isDarkMode ? 'bg-gray-700 h-full border-gray-600 focus:border-purple-400' : 'bg-white/90 border-gray-300 focus:border-indigo-400'
-                } rounded-lg focus:outline-none focus:ring-2 transition-all duration-300`}
+                className={`block w-full px-4 py-2.5 focus:outline-none rounded-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? "border border-gray-600 bg-gray-700/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                    : "border border-gray-300 bg-white text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                }`}
                 placeholder="Enter your full name"
                 required
                 disabled={isLoading}
               />
-              <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-purple-500 to-pink-500 group-focus-within:w-full transition-all duration-500"></div>
             </div>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email</label>
-            <div className={`relative group ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+            <label className={`block text-sm font-medium mb-1  ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email</label>
+            <div className={`relative group`}>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={`block w-full px-4 py-2.5 border ${
-                  isDarkMode ? 'bg-gray-700 border-gray-600 focus:border-purple-400' : 'bg-white/90 border-gray-300 focus:border-indigo-400'
-                } rounded-lg focus:outline-none focus:ring-2 transition-all duration-300`}
+                className={`block w-full px-4 focus:outline-none py-2.5 rounded-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? "border border-gray-600 bg-gray-700/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                    : "border border-gray-300 bg-white text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                }`}
                 placeholder="Enter your email"
                 required
                 disabled={isLoading}
               />
-              <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-purple-500 to-pink-500 group-focus-within:w-full transition-all duration-500"></div>
+
             </div>
           </motion.div>
 
           <div className="grid grid-cols-2 gap-4">
             <motion.div variants={itemVariants}>
               <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Age</label>
-              <div className={`relative group ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+              <div className={`relative group`}>
                 <input
                   type="number"
                   value={age}
                   onChange={(e) => setAge(Number(e.target.value) || "")}
-                  className={`block w-full px-4 py-2.5 border ${
-                    isDarkMode ? 'bg-gray-700 border-gray-600 focus:border-purple-400' : 'bg-white/90 border-gray-300 focus:border-indigo-400'
-                  } rounded-lg focus:outline-none focus:ring-2 transition-all duration-300`}
+                  className={`block w-full px-4 focus:outline-none py-2.5 rounded-lg transition-all duration-300 ${
+                    isDarkMode 
+                      ? "border border-gray-600 bg-gray-700/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                      : "border border-gray-300 bg-white text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  }`}
                   placeholder="Age"
                   min={1}
                   required
                   disabled={isLoading}
                 />
-                <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-purple-500 to-pink-500 group-focus-within:w-full transition-all duration-500"></div>
               </div>
             </motion.div>
 
             <motion.div variants={itemVariants}>
               <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Gender</label>
-              <div className={`relative group ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+              <div className={`relative group`}>
                 <select
                   value={gender}
                   title="gender"
                   onChange={(e) => setGender(e.target.value)}
-                  className={`block w-full px-4 py-3 border ${
-                    isDarkMode ? 'bg-gray-700 border-gray-600 focus:border-purple-400' : 'bg-white/90 border-gray-300 focus:border-indigo-400'
-                  } rounded-lg focus:outline-none focus:ring-2 transition-all duration-300`}
+                  className={`block w-full px-4 focus:outline-none py-3 rounded-lg transition-all duration-300 ${
+                    isDarkMode 
+                      ? "border border-gray-600 bg-gray-700/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                      : "border border-gray-300 bg-white text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  }`}
                   required
                   disabled={isLoading}
                 >
@@ -222,44 +229,45 @@ const SignUpPage = () => {
                   <option value="Female" className={isDarkMode ? 'bg-gray-700' : 'bg-white'}>Female</option>
                   <option value="Other" className={isDarkMode ? 'bg-gray-700' : 'bg-white'}>Other</option>
                 </select>
-                <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-purple-500 to-pink-500 group-focus-within:w-full transition-all duration-500"></div>
               </div>
             </motion.div>
           </div>
 
           <motion.div variants={itemVariants}>
             <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Password</label>
-            <div className={`relative group ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+            <div className={`relative group`}>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`block w-full px-4 py-2.5 border ${
-                  isDarkMode ? 'bg-gray-700 border-gray-600 focus:border-purple-400' : 'bg-white/90 border-gray-300 focus:border-indigo-400'
-                } rounded-lg focus:outline-none focus:ring-2 transition-all duration-300`}
+                className={`block w-full px-4 focus:outline-none py-2.5 rounded-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? "border border-gray-600 bg-gray-700/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                    : "border border-gray-300 bg-white text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                }`}
                 placeholder="Create a password"
                 required
                 disabled={isLoading}
               />
-              <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-purple-500 to-pink-500 group-focus-within:w-full transition-all duration-500"></div>
             </div>
           </motion.div>
 
           <motion.div variants={itemVariants}>
             <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Confirm Password</label>
-            <div className={`relative group ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+            <div className={`relative group`}>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className={`block w-full px-4 py-2.5 border ${
-                  isDarkMode ? 'bg-gray-700 border-gray-600 focus:border-purple-400' : 'bg-white/90 border-gray-300 focus:border-indigo-400'
-                } rounded-lg focus:outline-none focus:ring-2 transition-all duration-300`}
+                className={`block w-full px-4 focus:outline-none py-2.5 rounded-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? "border border-gray-600 bg-gray-700/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                    : "border border-gray-300 bg-white text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                }`}
                 placeholder="Confirm your password"
                 required
                 disabled={isLoading}
               />
-              <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-purple-500 to-pink-500 group-focus-within:w-full transition-all duration-500"></div>
             </div>
           </motion.div>
 

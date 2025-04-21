@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
+import ThemeSwitcher from "@/components/shared/ThemeSwitcher";
 
 const ResetPasswordPage = () => {
   const router = useRouter();
@@ -261,6 +262,10 @@ const ResetPasswordPage = () => {
         variants={containerVariants}
         className={`auth-content relative z-10 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} p-8 rounded-2xl shadow-2xl w-full max-w-lg mx-6 backdrop-blur-md bg-opacity-80 dark:bg-opacity-30 border border-white/10`}
       >
+        <div className="absolute top-4 right-4">
+          <ThemeSwitcher />
+        </div>
+
         <motion.div variants={itemVariants} className="flex justify-center mb-6">
           <div className={`relative text-3xl font-extrabold ${isDarkMode ? 'text-purple-300' : 'text-indigo-600'} tracking-wider`}>
             <motion.span
@@ -299,14 +304,16 @@ const ResetPasswordPage = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className={`block w-full px-4 py-2.5 border ${
-                      isDarkMode ? 'bg-gray-700 border-gray-600 focus:border-purple-400' : 'bg-white/90 border-gray-300 focus:border-indigo-400'
-                    } rounded-lg focus:outline-none focus:ring-2 transition-all duration-300`}
+                    className={`block w-full px-4 focus:outline-none py-2.5 rounded-lg transition-all duration-300 ${
+                      isDarkMode 
+                        ? "border border-gray-600 bg-gray-700/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                        : "border border-gray-300 bg-white text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    }`}
+                 
                     placeholder="Enter your email"
                     required
                     disabled={isLoading}
                   />
-                  <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-purple-500 to-pink-500 group-focus-within:w-full transition-all duration-500"></div>
                 </div>
               </motion.div>
 
@@ -458,14 +465,16 @@ const ResetPasswordPage = () => {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className={`block w-full px-4 py-2.5 border ${
-                      isDarkMode ? 'bg-gray-700 border-gray-600 focus:border-purple-400' : 'bg-white/90 border-gray-300 focus:border-indigo-400'
-                    } rounded-lg focus:outline-none focus:ring-2 transition-all duration-300`}
+                    className={`block w-full px-4 focus:outline-none py-2.5 rounded-lg transition-all duration-300 ${
+                      isDarkMode 
+                        ? "border border-gray-600 bg-gray-700/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                        : "border border-gray-300 bg-white text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    }`}
+                 
                     placeholder="Create new password"
                     required
                     disabled={isLoading}
                   />
-                  <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-purple-500 to-pink-500 group-focus-within:w-full transition-all duration-500"></div>
                 </div>
               </motion.div>
 
@@ -476,14 +485,16 @@ const ResetPasswordPage = () => {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={`block w-full px-4 py-2.5 border ${
-                      isDarkMode ? 'bg-gray-700 border-gray-600 focus:border-purple-400' : 'bg-white/90 border-gray-300 focus:border-indigo-400'
-                    } rounded-lg focus:outline-none focus:ring-2 transition-all duration-300`}
+                    className={`block w-full px-4 focus:outline-none py-2.5 rounded-lg transition-all duration-300 ${
+                      isDarkMode 
+                        ? "border border-gray-600 bg-gray-700/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                        : "border border-gray-300 bg-white text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    }`}
+                 
                     placeholder="Confirm new password"
                     required
                     disabled={isLoading}
                   />
-                  <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-purple-500 to-pink-500 group-focus-within:w-full transition-all duration-500"></div>
                 </div>
               </motion.div>
 
