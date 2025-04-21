@@ -162,7 +162,6 @@ const Profile = ({userId}:ProfileProps) => {
     };
       
     const [emailNotifications, setEmailNotifications] = useState(true);
-    const [smsUpdates, setSmsUpdates] = useState(false);
     const [notificationPreference, setNotificationPreference] = useState("email");
     const [enableEdit, setEnableEdit] = useState(false);
     const [enableNotificationEdit, setEnableNotificationEdit] = useState(false);
@@ -208,9 +207,7 @@ const Profile = ({userId}:ProfileProps) => {
                 setNotificationPreference(userNotifPref);
                 
                 // Set toggle states based on notification preference
-                setEmailNotifications(userNotifPref === 'email' || userNotifPref === 'both');
-                setSmsUpdates(userNotifPref === 'sms' || userNotifPref === 'both');
-                
+                setEmailNotifications(userNotifPref === 'email');
                 
                 setMemberDate(
                     userData.user.data.createdAt
@@ -688,16 +685,8 @@ const Profile = ({userId}:ProfileProps) => {
                    const newEmailState = !emailNotifications;
                    setEmailNotifications(newEmailState);
                    
-                   // Update notification preference based on both toggle states
-                   if (newEmailState && smsUpdates) {
-                     setNotificationPreference('both');
-                   } else if (newEmailState) {
-                     setNotificationPreference('email');
-                   } else if (smsUpdates) {
-                     setNotificationPreference('sms');
-                   } else {
-                     setNotificationPreference('none');
-                   }
+                   // Update notification preference based on toggle state
+                   setNotificationPreference(newEmailState ? 'email' : 'none');
                  }}
                  disabled={!enableNotificationEdit}
                  className={`w-10 sm:w-12 h-5 sm:h-6 flex items-center rounded-full transition p-0.5 sm:p-1 ${
@@ -713,57 +702,15 @@ const Profile = ({userId}:ProfileProps) => {
                  ></div>
                </button>
              </motion.div>
-  
-             <motion.div 
-               variants={itemVariants}
-               className="flex items-center justify-between"
-             >
-               <p className={`text-sm sm:text-base ${subTextClass}`}>SMS Updates</p>
-               <button
-                 onClick={() => {
-                   if (!enableNotificationEdit) return;
-                   
-                   const newSmsState = !smsUpdates;
-                   setSmsUpdates(newSmsState);
-                   
-                   // Update notification preference based on both toggle states
-                   if (emailNotifications && newSmsState) {
-                     setNotificationPreference('both');
-                   } else if (emailNotifications) {
-                     setNotificationPreference('email');
-                   } else if (newSmsState) {
-                     setNotificationPreference('sms');
-                   } else {
-                     setNotificationPreference('none');
-                   }
-                 }}
-                 disabled={!enableNotificationEdit}
-                 className={`w-10 sm:w-12 h-5 sm:h-6 flex items-center rounded-full p-0.5 sm:p-1 transition ${
-                   smsUpdates 
-                     ? isDarkMode ? "bg-purple-600" : "bg-indigo-600" 
-                     : isDarkMode ? "bg-gray-700" : "bg-gray-300"
-                 } ${!enableNotificationEdit ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
-               >
-                 <div
-                   className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all duration-300 ${
-                     smsUpdates ? "translate-x-5 sm:translate-x-6" : "translate-x-0"
-                   }`}
-                 ></div>
-               </button>
-             </motion.div>
              
              <motion.div 
                variants={itemVariants}
                className="border-t border-gray-200 dark:border-gray-700 pt-3"
              >
                <p className={`text-xs ${subTextClass}`}>
-                 {notificationPreference === 'both' 
-                   ? 'You will receive notifications via both email and SMS.' 
-                   : notificationPreference === 'email'
+                 {notificationPreference === 'email'
                      ? 'You will only receive email notifications.'
-                     : notificationPreference === 'sms'
-                       ? 'You will only receive SMS notifications.' 
-                       : 'All notifications are currently disabled.'}
+                     : 'All notifications are currently disabled.'}
                </p>
              </motion.div>
            </motion.div>

@@ -119,11 +119,13 @@ const MentalHealthChart = ({ chartData }: MentalHealthChartProps) => {
           },
         }}
         colors={[lineColor]}
-        lineWidth={4}
+        lineWidth={3}
         enablePoints={true}
-        pointSize={10}
+        pointSize={8}
+        pointBorderColor={isDarkMode ? "#f3f4f6" : "#111827"}
+        
         pointColor={isDarkMode ? "#a78bfa" : "#8b5cf6"}
-        pointBorderWidth={2}
+        pointBorderWidth={1}
         curve="monotoneX"
         enableGridX={false}
         enableGridY={true}

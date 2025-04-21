@@ -364,6 +364,26 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                 return;
             }
 
+            // Send notification with mood score and recommendations
+            try {
+                const notificationResponse = await fetch('/api/notifications/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId,
+                        score: parseFloat(data.mood_score),
+                        recommendations: data.recommendations
+                    })
+                });
+                
+                const notificationResult = await notificationResponse.json();
+                console.log('Notification result:', notificationResult);
+            } catch (notificationError) {
+                console.error('Error sending notification:', notificationError);
+                // Continue even if notification fails
+            }
 
         } catch (error) {
             // For errors, also ensure minimum loading time

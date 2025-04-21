@@ -1,5 +1,6 @@
 import MoodModel from "../../database/models/mood";
 import { connectToDatabase } from "../mongoose";
+import { sendMoodNotification } from "./notifications.action";
 
 // Define a type that matches the schema structure
 type MoodDetails = {
@@ -45,6 +46,17 @@ export const addOrUpdateMoodDetails = async (userId: string, moodDetails: any) =
         moodData: [moodDetails],
       });
       await newMood.save();
+    }
+
+    // Send notification with the mood score and recommendations
+    try {
+      if (moodDetails.score && moodDetails.reccommendations) {
+        await sendMoodNotification(userId, moodDetails.score, moodDetails.reccommendations);
+        console.log("Mood notification sent successfully");
+      }
+    } catch (notificationError) {
+      console.error("Error sending mood notification:", notificationError);
+      // Continue even if notification fails
     }
 
     return { success: true, message: "Mood details added successfully" };
