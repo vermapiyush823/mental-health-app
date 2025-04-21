@@ -517,7 +517,7 @@ const Profile = ({userId}:ProfileProps) => {
              )}
 
              <div className="overflow-x-auto -mx-4 sm:mx-0">
-               <div className="min-w-[440px] sm:min-w-0"> {/* Force horizontal scroll on very small screens */}
+               <div className="min-w-[400px] sm:min-w-0"> {/* Force horizontal scroll on very small screens */}
                  <table className="w-full text-sm sm:text-base md:text-lg">
                    <tbody>
                      <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
