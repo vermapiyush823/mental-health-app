@@ -98,7 +98,9 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
   useEffect(() => {
     // Keep track of connection attempts for backoff strategy
     let connectionAttempts = 0;
-    const maxRetryDelay = 30000; // 30 seconds max delay
+    const maxRetryDelay = 10000; // 10 seconds max delay between retries
+    const reconnectInterval = 55000; // Reconnect every 55 seconds (before Vercel's 60s timeout)
+    let reconnectTimer: NodeJS.Timeout | null = null;
     
     // Function to set up the event source
     const setupEventSource = () => {
@@ -121,11 +123,18 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
           
           // Clean up the errored connection
           eventSource.close();
+          eventSourceRef.current = null;
+          
+          // Clear the reconnect timer if it exists
+          if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+          }
           
           // Implement exponential backoff for reconnection
           connectionAttempts++;
           const delay = Math.min(
-            1000 * Math.pow(1.5, connectionAttempts), 
+            1000 * Math.pow(1.5, Math.min(connectionAttempts, 8)), 
             maxRetryDelay
           );
           
@@ -135,11 +144,18 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
 
         // This is the standard message event handler for SSE
         eventSource.onmessage = (event) => {
-          // Success! Reset connection attempts
+          // Success! Reset connection attempts on successful messages
           connectionAttempts = 0;
           
           // If we get any message, we know we're connected
           setIsConnected(true);
+          
+          // Handle pings or actual data
+          if (event.data.startsWith(':')) {
+            // This is a ping, just log it
+            console.log('Received ping');
+            return;
+          }
           
           console.log('SSE message received:', event.data);
           try {
@@ -200,6 +216,13 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
             console.error('Error parsing SSE data:', error);
           }
         };
+        
+        // Set up proactive reconnection before Vercel times out
+        reconnectTimer = setTimeout(() => {
+          console.log('Proactively reconnecting before timeout...');
+          setupEventSource();
+        }, reconnectInterval);
+        
       } catch (error) {
         console.error('Error initializing EventSource:', error);
         setTimeout(setupEventSource, 3000);
@@ -218,6 +241,9 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
     // Cleanup on component unmount
     return () => {
       console.log('Cleaning up SSE connection');
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
