@@ -31,6 +31,30 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
 
+  // Add mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detect mobile devices on mount
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+      setIsMobile(mobile);
+      return mobile;
+    };
+    
+    checkMobile();
+    
+    // Also check on resize in case of orientation changes
+    const handleResize = () => {
+      checkMobile();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Make sure component is mounted before using theme
   useEffect(() => {
     setMounted(true)
@@ -63,14 +87,25 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
     }
   }
 
+  // Throttle message animations on mobile devices
   const messageVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { 
       opacity: 1, 
       y: 0,
-      transition: { type: "spring", stiffness: 100 }
+      transition: { 
+        type: "spring", 
+        stiffness: isMobile ? 50 : 100,
+        // Disable animation for older messages on mobile to improve performance
+        ...((message, i:any) => {
+          if (isMobile && i < messages.length - 5) {
+            return { duration: 0 };
+          }
+          return {};
+        })
+      }
     }
-  }
+  };
 
   // Fetch initial messages from the API with improved error handling and retries
   const fetchMessages = async (retryCount = 0) => {
@@ -481,7 +516,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                 {msg.userId === userId && (
                   <button 
                     onClick={() => deleteUserMessage(msg._id)}
-                    className={`ml-2 p-1.5 rounded-full invisible group-hover:visible transition-opacity ${
+                    className={`ml-2 p-1.5 rounded-full  transition-opacity ${
                       isDarkMode 
                         ? 'bg-gray-700 hover:bg-red-900/70 text-gray-300 hover:text-red-300' 
                         : 'bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600'

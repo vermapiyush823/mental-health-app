@@ -7,11 +7,23 @@ export const dynamic = 'force-dynamic';
 // Set maxDuration to 60 seconds (maximum allowed for Vercel Hobby plan)
 export const maxDuration = 60;
 
+// Define different polling rates for different devices
+const MOBILE_POLL_RATE = 3500; // 3.5 seconds for mobile
+const DESKTOP_POLL_RATE = 2000; // 2 seconds for desktop
+
 export async function GET(request: NextRequest) {
   console.log('New SSE connection request received');
   
   // Initialize MongoDB connection
   await connectToDatabase();
+  
+  // Detect if user is on mobile
+  const userAgent = request.headers.get('user-agent') || '';
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  
+  // Set polling rate based on device type
+  const pollRate = isMobile ? MOBILE_POLL_RATE : DESKTOP_POLL_RATE;
+  console.log(`Client detected as ${isMobile ? 'mobile' : 'desktop'}, setting poll rate to ${pollRate}ms`);
   
   // Store last checked timestamp
   let lastCheckedTime = new Date();
@@ -25,13 +37,14 @@ export async function GET(request: NextRequest) {
       console.log('New SSE client connected');
       
       // Send initial connection message
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connection', data: { status: 'connected' } })}\n\n`));
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connection', data: { status: 'connected', isMobile } })}\n\n`));
       
-      // Fetch initial messages for context
+      // Fetch initial messages for context - fewer messages for mobile
       try {
+        const limit = isMobile ? 10 : 15;
         const recentMessages = await CommunityChat.find({})
           .sort({ createdAt: -1 })
-          .limit(15)
+          .limit(limit)
           .lean();
         
         if (recentMessages.length > 0) {
@@ -42,19 +55,33 @@ export async function GET(request: NextRequest) {
         console.error('Error fetching initial messages:', error);
       }
       
-      // Set up polling for new messages
+      // Set up polling for new messages with optimized query
       pollInterval = setInterval(async () => {
         try {
-          // Poll for new messages since last check
-          const newMessages = await CommunityChat.find({
-            createdAt: { $gt: lastCheckedTime }
-          })
+          // Poll for new messages since last check with optimized projection
+          const newMessages = await CommunityChat.find(
+            { createdAt: { $gt: lastCheckedTime } },
+            // Only select the fields we need
+            { userId: 1, username: 1, userImage: 1, message: 1, createdAt: 1 }
+          )
           .sort({ createdAt: 1 })
           .lean();
           
           if (newMessages.length > 0) {
             console.log(`Found ${newMessages.length} new messages to broadcast`);
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'newMessages', data: newMessages })}\n\n`));
+            
+            // For mobile, batch messages to reduce overhead
+            if (isMobile && newMessages.length > 3) {
+              // Send only the latest 3 messages to mobile clients when there are many
+              const latestMessages = newMessages.slice(-3);
+              controller.enqueue(encoder.encode(
+                `data: ${JSON.stringify({ type: 'newMessages', data: latestMessages, count: newMessages.length })}\n\n`
+              ));
+            } else {
+              controller.enqueue(encoder.encode(
+                `data: ${JSON.stringify({ type: 'newMessages', data: newMessages })}\n\n`
+              ));
+            }
             
             // Update last checked time to the most recent message time
             lastCheckedTime = new Date(Math.max(...newMessages.map(msg => new Date(msg.createdAt).getTime())));
@@ -62,9 +89,10 @@ export async function GET(request: NextRequest) {
         } catch (error) {
           console.error('Error polling for new messages:', error);
         }
-      }, 2000); // Poll every 2 seconds
+      }, pollRate);
       
       // Add a dedicated ping interval to keep the connection alive
+      // Less frequent pings for mobile to reduce battery usage
       pingInterval = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(`: ping\n\n`));
@@ -73,7 +101,7 @@ export async function GET(request: NextRequest) {
           if (pingInterval) clearInterval(pingInterval);
           if (pollInterval) clearInterval(pollInterval);
         }
-      }, 30000); // Send ping every 30 seconds
+      }, isMobile ? 45000 : 30000); // 45 seconds for mobile, 30 for desktop
     },
     
     cancel() {
@@ -101,6 +129,7 @@ export async function GET(request: NextRequest) {
       'Access-Control-Allow-Origin': '*', // Allow CORS for SSE
       'Access-Control-Allow-Methods': 'GET',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Transfer-Encoding': 'chunked' // Enables chunked transfer for better mobile performance
     },
   });
 }
