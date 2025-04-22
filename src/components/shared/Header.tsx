@@ -91,6 +91,7 @@ const Header = ({ userId }: HeaderProps) => {
     { name: "Home", href: "/" },
     { name: "Mood Tracker", href: "/mood-track" },
     { name: "Resources", href: "/resources" },
+    { name: "Community", href: "/community" },
     { name: "Support", href: "/support" }
   ];
   
