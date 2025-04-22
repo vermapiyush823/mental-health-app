@@ -204,6 +204,26 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                   });
                 }
                 break;
+
+              case 'newMessages':
+                // Handle a batch of new messages from DB polling
+                if (Array.isArray(data.data)) {
+                  console.log(`Received ${data.data.length} new messages from polling`);
+                  setMessages(prevMessages => {
+                    // Create a map of existing messages for deduplication
+                    const existingIds = new Set(prevMessages.map(msg => msg._id));
+                    
+                    // Add only new messages
+                    const newMessages = data.data.filter((msg: Message) => !existingIds.has(msg._id));
+                    console.log(`Adding ${newMessages.length} new messages to state`);
+                    
+                    if (newMessages.length > 0) {
+                      return [...prevMessages, ...newMessages];
+                    }
+                    return prevMessages;
+                  });
+                }
+                break;
                 
               case 'newMessage':
                 // Handle single new message

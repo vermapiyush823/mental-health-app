@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { eventBus } from '../../../../../lib/communityChat';
+import { connectToDatabase } from '../../../../../lib/mongoose';
+import CommunityChat from '../../../../../database/models/community_chat';
 
 // This needs to be dynamic to keep the connection alive
 export const dynamic = 'force-dynamic';
@@ -9,15 +10,59 @@ export const maxDuration = 60;
 export async function GET(request: NextRequest) {
   console.log('New SSE connection request received');
   
-  // Create a variable to store unsubscribe functions
-  let unsubscribers: (() => void)[] = [];
+  // Initialize MongoDB connection
+  await connectToDatabase();
   
-  // Create a variable to store the ping interval
+  // Store last checked timestamp
+  let lastCheckedTime = new Date();
+  
+  // Create variables for intervals outside of the stream to reference them later
+  let pollInterval: NodeJS.Timeout | null = null;
   let pingInterval: NodeJS.Timeout | null = null;
   
   const stream = new ReadableStream({
-    start(controller) {
+    async start(controller) {
       console.log('New SSE client connected');
+      
+      // Send initial connection message
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connection', data: { status: 'connected' } })}\n\n`));
+      
+      // Fetch initial messages for context
+      try {
+        const recentMessages = await CommunityChat.find({})
+          .sort({ createdAt: -1 })
+          .limit(15)
+          .lean();
+        
+        if (recentMessages.length > 0) {
+          console.log(`Sending ${recentMessages.length} recent messages to new client`);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'messages', data: recentMessages.reverse() })}\n\n`));
+        }
+      } catch (error) {
+        console.error('Error fetching initial messages:', error);
+      }
+      
+      // Set up polling for new messages
+      pollInterval = setInterval(async () => {
+        try {
+          // Poll for new messages since last check
+          const newMessages = await CommunityChat.find({
+            createdAt: { $gt: lastCheckedTime }
+          })
+          .sort({ createdAt: 1 })
+          .lean();
+          
+          if (newMessages.length > 0) {
+            console.log(`Found ${newMessages.length} new messages to broadcast`);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'newMessages', data: newMessages })}\n\n`));
+            
+            // Update last checked time to the most recent message time
+            lastCheckedTime = new Date(Math.max(...newMessages.map(msg => new Date(msg.createdAt).getTime())));
+          }
+        } catch (error) {
+          console.error('Error polling for new messages:', error);
+        }
+      }, 2000); // Poll every 2 seconds
       
       // Add a dedicated ping interval to keep the connection alive
       pingInterval = setInterval(() => {
@@ -26,52 +71,24 @@ export async function GET(request: NextRequest) {
         } catch (err) {
           // If we can't send a ping, the connection is likely dead
           if (pingInterval) clearInterval(pingInterval);
+          if (pollInterval) clearInterval(pollInterval);
         }
       }, 30000); // Send ping every 30 seconds
-      
-      // Function to handle messages from the event bus
-      const messageHandler = (message: any) => {
-        try {
-          // Format the message data for SSE
-          const eventData = JSON.stringify(message);
-          controller.enqueue(encoder.encode(`data: ${eventData}\n\n`));
-        } catch (error) {
-          console.error('Error sending message to client:', error);
-        }
-      };
-      
-      // Set up subscriptions
-      const newMessageUnsub = eventBus.subscribe('newMessage', (message) => {
-        messageHandler({ type: 'newMessage', data: message });
-      });
-      
-      const deleteMessageUnsub = eventBus.subscribe('deleteMessage', (message) => {
-        messageHandler({ type: 'deleteMessage', data: message });
-      });
-      
-      // Store unsubscribe functions for cleanup
-      unsubscribers = [newMessageUnsub, deleteMessageUnsub];
-      
-      // Send initial connection message
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connection', data: { status: 'connected' } })}\n\n`));
-      
-      // Send recent messages to the new client
-      const recentMessages = eventBus.getRecentMessages();
-      if (recentMessages.length > 0) {
-        console.log(`Sending ${recentMessages.length} recent messages to new client`);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'messages', data: recentMessages })}\n\n`));
-      }
     },
     
     cancel() {
-      // Clear ping interval
-      if (pingInterval) {
-        clearInterval(pingInterval);
+      // Clear intervals
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
       }
       
-      // Cleanup subscriptions when client disconnects
-      unsubscribers.forEach(unsub => unsub());
-      console.log('Client disconnected, cleaned up subscriptions');
+      if (pingInterval) {
+        clearInterval(pingInterval);
+        pingInterval = null;
+      }
+      
+      console.log('Client disconnected, cleaned up polling');
     }
   });
 
