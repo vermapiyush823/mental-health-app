@@ -97,7 +97,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
         type: "spring", 
         stiffness: isMobile ? 50 : 100,
         // Disable animation for older messages on mobile to improve performance
-        ...((message, i:any) => {
+        ...((message:any, i:any) => {
           if (isMobile && i < messages.length - 5) {
             return { duration: 0 };
           }
