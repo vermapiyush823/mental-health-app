@@ -7,13 +7,17 @@ export async function getCommunityMessages(limit: number = 50, skip: number = 0)
   try {
     await connectToDatabase();
     
-    // Get messages with newest first, then we'll reverse for display
+    // Create an index on createdAt if it doesn't exist (one-time operation)
+    await CommunityChat.collection.createIndex({ createdAt: -1 });
+    
+    // Fetch the most recent messages directly without sorting the entire collection
+    // This approach uses the index to efficiently fetch only what we need
     const messages = await CommunityChat.find({})
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip(skip);
-      
-    // Return in chronological order for display
+      .sort({ createdAt: -1 }) // Get newest first using the index
+      .limit(limit)  // Limit to requested number of messages
+      .lean();       // Use lean for better performance
+    
+    // Return the messages in chronological order (oldest first)
     return messages.reverse();
   } catch (error) {
     console.error("Error getting community messages:", error);

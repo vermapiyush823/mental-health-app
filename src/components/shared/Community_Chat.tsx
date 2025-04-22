@@ -96,113 +96,133 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
 
   // Set up Server-Sent Events connection
   useEffect(() => {
+    // Keep track of connection attempts for backoff strategy
+    let connectionAttempts = 0;
+    const maxRetryDelay = 30000; // 30 seconds max delay
+    
     // Function to set up the event source
     const setupEventSource = () => {
       // Close any existing connection
       if (eventSourceRef.current) {
-        eventSourceRef.current.close()
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
 
       try {
-        console.log('Setting up SSE connection...')
-        // Create a new EventSource connection with no credentials (simpler approach)
-        const eventSource = new EventSource('/api/community-chat/sse')
-        eventSourceRef.current = eventSource
-
-        // Handle connection open - SSE doesn't actually have an onopen event
-        // but it will fire when connection is established
-        setIsConnected(true)
-        console.log('SSE EventSource created')
+        console.log('Setting up SSE connection...');
+        // Create a new EventSource connection
+        const eventSource = new EventSource('/api/community-chat/sse');
+        eventSourceRef.current = eventSource;
 
         // Handle connection error
         eventSource.onerror = (error) => {
-          console.error('SSE connection error:', error)
-          setIsConnected(false)
+          console.error('SSE connection error:', error);
+          setIsConnected(false);
           
-          // Attempt to reconnect after a delay
-          eventSource.close()
-          setTimeout(setupEventSource, 5000)
-        }
+          // Clean up the errored connection
+          eventSource.close();
+          
+          // Implement exponential backoff for reconnection
+          connectionAttempts++;
+          const delay = Math.min(
+            1000 * Math.pow(1.5, connectionAttempts), 
+            maxRetryDelay
+          );
+          
+          console.log(`Reconnection attempt #${connectionAttempts} in ${delay}ms`);
+          setTimeout(setupEventSource, delay);
+        };
 
         // This is the standard message event handler for SSE
         eventSource.onmessage = (event) => {
-          console.log('SSE message received:', event.data)
+          // Success! Reset connection attempts
+          connectionAttempts = 0;
+          
+          // If we get any message, we know we're connected
+          setIsConnected(true);
+          
+          console.log('SSE message received:', event.data);
           try {
-            const data = JSON.parse(event.data)
-            console.log('Parsed SSE data:', data)
+            const data = JSON.parse(event.data);
+            console.log('Parsed SSE data:', data);
             
             switch (data.type) {
               case 'connection':
-                console.log('Connected to SSE stream', data)
-                setIsConnected(true)
-                break
+                console.log('Connected to SSE stream', data);
+                setIsConnected(true);
+                break;
                 
               case 'messages':
                 // Handle batch of messages
                 if (Array.isArray(data.data)) {
-                  console.log(`Received batch of ${data.data.length} messages`)
+                  console.log(`Received batch of ${data.data.length} messages`);
                   setMessages(prevMessages => {
                     // Create a map of existing messages for deduplication
-                    const existingIds = new Set(prevMessages.map(msg => msg._id))
+                    const existingIds = new Set(prevMessages.map(msg => msg._id));
                     
                     // Add only new messages
-                    const newMessages = data.data.filter((msg: Message) => !existingIds.has(msg._id))
-                    console.log(`Adding ${newMessages.length} new messages to state`)
+                    const newMessages = data.data.filter((msg: Message) => !existingIds.has(msg._id));
+                    console.log(`Adding ${newMessages.length} new messages to state`);
                     
                     if (newMessages.length > 0) {
-                      return [...prevMessages, ...newMessages]
+                      return [...prevMessages, ...newMessages];
                     }
-                    return prevMessages
-                  })
+                    return prevMessages;
+                  });
                 }
-                break
+                break;
                 
               case 'newMessage':
                 // Handle single new message
-                console.log('Received new message:', data.data)
+                console.log('Received new message:', data.data);
                 setMessages(prevMessages => {
                   // Check if message already exists (prevent duplicates)
-                  const exists = prevMessages.some(msg => msg._id === data.data._id)
+                  const exists = prevMessages.some(msg => msg._id === data.data._id);
                   if (!exists) {
-                    return [...prevMessages, data.data]
+                    return [...prevMessages, data.data];
                   }
-                  return prevMessages
-                })
-                break
+                  return prevMessages;
+                });
+                break;
                 
               case 'deleteMessage':
                 // Handle message deletion
-                console.log('Received message deletion:', data.data)
+                console.log('Received message deletion:', data.data);
                 setMessages(prevMessages => 
                   prevMessages.filter(msg => msg._id !== data.data.messageId)
-                )
-                break
+                );
+                break;
                 
               default:
-                console.log('Unknown SSE event type:', data.type)
+                console.log('Unknown SSE event type:', data.type);
             }
           } catch (error) {
-            console.error('Error parsing SSE data:', error)
+            console.error('Error parsing SSE data:', error);
           }
-        }
+        };
       } catch (error) {
-        console.error('Error initializing EventSource:', error)
-        setTimeout(setupEventSource, 5000)
+        console.error('Error initializing EventSource:', error);
+        setTimeout(setupEventSource, 3000);
       }
-    }
+    };
 
     // Initial setup - fetch messages first, then set up SSE
     fetchMessages().then(() => {
-      setupEventSource()
-    })
+      setupEventSource();
+    }).catch(error => {
+      console.error('Error fetching initial messages:', error);
+      // Still try to set up SSE even if initial fetch fails
+      setupEventSource();
+    });
 
     // Cleanup on component unmount
     return () => {
-      console.log('Cleaning up SSE connection')
+      console.log('Cleaning up SSE connection');
       if (eventSourceRef.current) {
-        eventSourceRef.current.close()
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
-    }
+    };
   }, [])
 
   // Send a new message

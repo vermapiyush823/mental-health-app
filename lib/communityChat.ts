@@ -11,6 +11,9 @@ class EventBus {
   private recentMessages: any[] = [];
   private maxRecentMessages = 50;
   
+  // Track connection status
+  private initialized = false;
+  
   private constructor() {}
   
   public static getInstance(): EventBus {
@@ -27,12 +30,14 @@ class EventBus {
     }
     
     this.subscribers.get(channel)?.add(callback);
+    console.log(`New subscriber added to ${channel}, total: ${this.subscribers.get(channel)?.size || 0}`);
     
     // Return unsubscribe function
     return () => {
       const subs = this.subscribers.get(channel);
       if (subs) {
         subs.delete(callback);
+        console.log(`Subscriber removed from ${channel}, remaining: ${subs.size}`);
         if (subs.size === 0) {
           this.subscribers.delete(channel);
         }
@@ -43,6 +48,7 @@ class EventBus {
   // Publish to a channel
   public publish(channel: string, message: any): void {
     console.log(`Publishing to ${channel}:`, message);
+    this.initialized = true;
     
     // Store new messages for future subscribers
     if (channel === 'newMessage' && message) {
@@ -78,6 +84,11 @@ class EventBus {
   // Get recent messages for new connections
   public getRecentMessages(): any[] {
     return [...this.recentMessages];
+  }
+  
+  // Check if event bus has been initialized with any messages
+  public isInitialized(): boolean {
+    return this.initialized;
   }
 }
 
