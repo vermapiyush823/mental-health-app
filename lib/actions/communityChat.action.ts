@@ -3,24 +3,50 @@ import CommunityChat from "../../database/models/community_chat";
 import User from "../../database/models/user";
 
 // Get all community chat messages (with pagination)
-export async function getCommunityMessages(limit: number = 50, skip: number = 0) {
+export async function getCommunityMessages(limit: number = 20, skip: number = 0) {
   try {
     await connectToDatabase();
     
-    // Create an index on createdAt if it doesn't exist (one-time operation)
-    await CommunityChat.collection.createIndex({ createdAt: -1 });
+    // Ensure reasonable limits to prevent timeouts
+    const safeLimit = Math.min(limit, 30);
     
-    // Fetch the most recent messages directly without sorting the entire collection
-    // This approach uses the index to efficiently fetch only what we need
-    const messages = await CommunityChat.find({})
-      .sort({ createdAt: -1 }) // Get newest first using the index
-      .limit(limit)  // Limit to requested number of messages
-      .lean();       // Use lean for better performance
+    // Projection to select only needed fields (optimization)
+    const projection = {
+      userId: 1,
+      username: 1,
+      userImage: 1,
+      message: 1,
+      createdAt: 1
+    };
+    
+    // Use a time-boxed query approach with lean() for better performance
+    const query = CommunityChat.find({}, projection)
+      .sort({ createdAt: -1 })
+      .limit(safeLimit)
+      .skip(skip)
+      .lean();
+      
+    // Set a timeout on the MongoDB query itself
+    const messages = await query.maxTimeMS(5000).exec();
     
     // Return the messages in chronological order (oldest first)
     return messages.reverse();
   } catch (error) {
     console.error("Error getting community messages:", error);
+    
+    // Add specific handling for common MongoDB errors
+    if (error instanceof Error && (error.name === 'MongooseError' || error.name === 'MongoServerError')) {
+      // If this is a MongoDB timeout error, provide a clearer message
+      if ((error as any).code === 50 || error.message.includes('timed out')) {
+        throw new Error('Database query timed out. The collection may be too large or server is busy.');
+      }
+      
+      // If this is the memory limit error we saw before
+      if ((error as any).code === 292 || error.message.includes('Sort exceeded memory limit')) {
+        throw new Error('Database sort operation exceeded memory limits. Try fetching fewer messages.');
+      }
+    }
+    
     throw error;
   }
 }

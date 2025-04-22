@@ -72,25 +72,42 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
     }
   }
 
-  // Fetch initial messages from the API
-  const fetchMessages = async () => {
-    setLoadingMessages(true)
-    setError(null)
+  // Fetch initial messages from the API with improved error handling and retries
+  const fetchMessages = async (retryCount = 0) => {
+    setLoadingMessages(true);
+    setError(null);
     
     try {
-      const response = await fetch(`/api/community-chat?limit=50`)
+      // Use a smaller limit for the initial load to prevent timeouts
+      const response = await fetch(`/api/community-chat?limit=15`);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch messages')
+      if (response.status === 408 || response.status === 504) {
+        throw new Error('Request timed out. Server might be busy.');
       }
       
-      const data = await response.json()
-      setMessages(data.data)
-    } catch (err) {
-      console.error('Error fetching messages:', err)
-      setError('Failed to load messages. Please try again.')
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch messages');
+      }
+      
+      const data = await response.json();
+      setMessages(data.data);
+    } catch (err:any) {
+      console.error('Error fetching messages:', err);
+      
+      // Implement retry logic for certain errors
+      if (retryCount < 2 && 
+          (err.message.includes('timeout') || 
+           err.message.includes('network') ||
+           err.message.includes('exceeded'))) {
+        console.log(`Retrying fetch (${retryCount + 1}/2)...`);
+        setTimeout(() => fetchMessages(retryCount + 1), 2000);
+        return;
+      }
+      
+      setError('Unable to load messages. Please try again later.');
     } finally {
-      setLoadingMessages(false)
+      setLoadingMessages(false);
     }
   }
 
