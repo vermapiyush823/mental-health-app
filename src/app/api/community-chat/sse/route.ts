@@ -3,8 +3,8 @@ import { eventBus } from '../../../../../lib/communityChat';
 
 // This needs to be dynamic to keep the connection alive
 export const dynamic = 'force-dynamic';
-// Increase the default response size limit
-export const maxDuration = 300; // 5 minutes
+// Set maxDuration to 60 seconds (maximum allowed for Vercel Hobby plan)
+export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
   console.log('New SSE connection request received');
