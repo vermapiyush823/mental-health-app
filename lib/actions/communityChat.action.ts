@@ -14,7 +14,6 @@ export async function getCommunityMessages(limit: number = 20, skip: number = 0)
     const projection = {
       userId: 1,
       username: 1,
-      userImage: 1,
       message: 1,
       createdAt: 1
     };
@@ -66,7 +65,6 @@ export async function addCommunityMessage(userId: string, message: string) {
     const newMessage = await CommunityChat.create({
       userId,
       username: user.name || "Anonymous",
-      userImage: user.image || "https://api.dicebear.com/6.x/avataaars/svg",
       message
     });
     

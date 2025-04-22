@@ -67,17 +67,25 @@ export async function updateUserProfilePicture(
   ) {
     try {
       await connectToDatabase();
-      const user = await User.findById(id);
-      if (!user) {
+      
+      // Generate the image string
+      const imageData = `data:${type};base64,${Buffer.from(buffer).toString("base64")}`;
+      
+      // Use findByIdAndUpdate with runValidators: false to only update the image field
+      const updatedUser = await User.findByIdAndUpdate(
+        id, 
+        { image: imageData },
+        { new: true, runValidators: false }
+      );
+      
+      if (!updatedUser) {
         throw new Error("User not found");
       }
-      console.log(id, buffer, type);
-      user.image = `data:${type};base64,${Buffer.from(buffer).toString(
-        "base64"
-      )}`;
-      await user.save();
-      return { url: user.image };
+      
+      return { url: updatedUser.image };
     } catch (error) {
       console.error("Error updating profile picture:", error);
+      // Re-throw the error so the calling function knows it failed
+      throw error;
     }
   }

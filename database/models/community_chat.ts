@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 interface CommunityChat {
     userId: string;
     username: string;
-    userImage: string;
     message: string;
     createdAt: Date;
 }
@@ -17,10 +16,6 @@ const communityChatSchema = new mongoose.Schema(
         username: {
             type: String,
             required: [true, "Username is required"],
-        },
-        userImage: {
-            type: String,
-            default: "https://api.dicebear.com/6.x/avataaars/svg",
         },
         message: {
             type: String,

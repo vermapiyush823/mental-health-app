@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
     },
     notificationPreference: {
       type: String,
-      enum: ['email', 'none'],
+      enum: ['email', 'none', 'sms'],
       default: 'email'
     },
     supportMembers: [{

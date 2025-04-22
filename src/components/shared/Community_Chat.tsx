@@ -10,7 +10,6 @@ interface Message {
   _id: string;
   userId: string;
   username: string;
-  userImage: string;
   message: string;
   createdAt: string;
 }
@@ -18,6 +17,39 @@ interface Message {
 interface CommunityChatProps {
   userId: string;
 }
+
+// Avatar component to display first letter of username
+const UserAvatar = ({ username, isDarkMode }: { username: string; isDarkMode: boolean }) => {
+  // Get first letter of username, default to '?' if empty
+  const initial = username && username.length > 0 ? username[0].toUpperCase() : '?';
+  
+  // Generate a consistent color based on username
+  const getColorFromName = (name: string) => {
+    const colors = [
+      'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
+      'bg-purple-500', 'bg-pink-500', 'bg-indigo-500',
+      'bg-teal-500', 'bg-red-500', 'bg-orange-500'
+    ];
+    
+    // Simple hash function to get consistent color
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Use hash to select a color
+    const colorIndex = Math.abs(hash) % colors.length;
+    return colors[colorIndex];
+  };
+  
+  const bgColorClass = getColorFromName(username);
+  
+  return (
+    <div className={`flex items-center mx-1 justify-center h-8 w-8 rounded-full ${bgColorClass} text-white font-medium`}>
+      {initial}
+    </div>
+  );
+};
 
 const Community_Chat = ({ userId }: CommunityChatProps) => {
   const [mounted, setMounted] = useState(false)
@@ -480,13 +512,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
             >
               <div className="flex items-start max-w-[85%] group">
                 {msg.userId !== userId && (
-                  <Image 
-                    src={msg.userImage} 
-                    alt={`${msg.username}'s avatar`} 
-                    width={35} 
-                    height={35} 
-                    className="h-8 w-8 rounded-full mr-2 mt-1" 
-                  />
+                  <UserAvatar username={msg.username} isDarkMode={isDarkMode} />
                 )}
                 
                 <div className="flex flex-col">
@@ -516,7 +542,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                 {msg.userId === userId && (
                   <button 
                     onClick={() => deleteUserMessage(msg._id)}
-                    className={`ml-2 p-1.5 rounded-full  transition-opacity ${
+                    className={`ml-2 p-1.5 rounded-full transition-opacity ${
                       isDarkMode 
                         ? 'bg-gray-700 hover:bg-red-900/70 text-gray-300 hover:text-red-300' 
                         : 'bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600'
@@ -528,13 +554,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                 
                 {/* User avatar for user's own messages (right aligned) */}
                 {msg.userId === userId && (
-                  <Image 
-                    src={msg.userImage} 
-                    alt="Your avatar" 
-                    width={35} 
-                    height={35} 
-                    className="h-8 w-8 rounded-full ml-2 mt-1" 
-                  />
+                  <UserAvatar username={msg.username} isDarkMode={isDarkMode} />
                 )}
               </div>
             </motion.div>
