@@ -67,8 +67,3 @@ export async function GET(request: NextRequest) {
 
 // Text encoder for sending data
 const encoder = new TextEncoder();
-
-// Export a function to broadcast messages through the event bus
-export function broadcastMessage(type: string, data: any) {
-  eventBus.publish(type, data);
-}

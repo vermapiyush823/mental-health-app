@@ -83,3 +83,8 @@ class EventBus {
 
 // Export a singleton instance
 export const eventBus = EventBus.getInstance();
+
+// Export a function to broadcast messages through the event bus
+export function broadcastMessage(type: string, data: any) {
+  eventBus.publish(type, data);
+}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addCommunityMessage } from "../../../../../lib/actions/communityChat.action";
-import { broadcastMessage } from "../sse/route";
+import { broadcastMessage } from "../../../../../lib/communityChat";
 
 export async function POST(req: NextRequest) {
   try {
