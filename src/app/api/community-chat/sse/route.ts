@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { connectToDatabase } from '../../../../../lib/mongoose';
 import CommunityChat from '../../../../../database/models/community_chat';
 import { eventBus } from '../../../../../lib/communityChat';
+import { isRedisConfigured, getSubscriber, REDIS_CHANNELS } from '../../../../../lib/redis';
 
 // This needs to be dynamic to keep the connection alive
 export const dynamic = 'force-dynamic';
@@ -37,12 +38,38 @@ export async function GET(request: NextRequest) {
   let pingInterval: NodeJS.Timeout | null = null;
   let deletionCheckInterval: NodeJS.Timeout | null = null;
   
+  // Variable to keep track of Redis subscription cleanup
+  let redisCleanupNeeded = false;
+  
+  // Track if controller is closed to prevent "Controller is already closed" errors
+  let isControllerClosed = false;
+  
   const stream = new ReadableStream({
     async start(controller) {
       console.log('New SSE client connected');
       
+      // Safe enqueue function that checks if controller is closed
+      const safeEnqueue = (data: string) => {
+        if (isControllerClosed) {
+          return false;
+        }
+        
+        try {
+          controller.enqueue(encoder.encode(data));
+          return true;
+        } catch (error: any) {
+          if (error.code === 'ERR_INVALID_STATE') {
+            console.log('Controller is closed, marking as closed');
+            isControllerClosed = true;
+            return false;
+          }
+          console.error('Error enqueueing data:', error);
+          return false;
+        }
+      };
+      
       // Send initial connection message
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connection', data: { status: 'connected', isMobile } })}\n\n`));
+      safeEnqueue(`data: ${JSON.stringify({ type: 'connection', data: { status: 'connected', isMobile } })}\n\n`);
       
       // Fetch initial messages for context - fewer messages for mobile
       try {
@@ -54,15 +81,20 @@ export async function GET(request: NextRequest) {
         
         if (recentMessages.length > 0) {
           console.log(`Sending ${recentMessages.length} recent messages to new client`);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'messages', data: recentMessages.reverse() })}\n\n`));
+          safeEnqueue(`data: ${JSON.stringify({ type: 'messages', data: recentMessages.reverse() })}\n\n`);
         }
       } catch (error) {
         console.error('Error fetching initial messages:', error);
       }
       
-      // Subscribe to message deletions from EventBus
-      const unsubscribeDelete = eventBus.subscribe('deleteMessage', (data) => {
+      // Function to handle deletion events (used by both Redis and EventBus)
+      const handleDeletionEvent = (data: any) => {
         try {
+          // If controller is closed, don't proceed
+          if (isControllerClosed) {
+            return;
+          }
+          
           // Handle multiple possible data structures for better compatibility
           let messageData;
           let messageId = null;
@@ -72,15 +104,21 @@ export async function GET(request: NextRequest) {
             messageId = data;
             messageData = { messageId: data };
           } else if (data && typeof data === 'object') {
-            // Ensure we have a consistent structure regardless of input format
-            messageId = data.messageId || (data.data && data.data.messageId) || data._id || data.id;
+            // Extract from different possible structures
+            if (data.data && typeof data.data === 'object') {
+              // Redis format: { type, data: { messageId }, timestamp }
+              messageId = data.data.messageId;
+              messageData = data.data;
+            } else {
+              // Direct format: { messageId }
+              messageId = data.messageId || data._id || data.id;
+              messageData = { messageId };
+            }
             
             if (!messageId) {
               console.error('SSE: Invalid deletion data format - no messageId found:', data);
               return;
             }
-            
-            messageData = { messageId };
           } else {
             console.error('SSE: Invalid deletion data format:', data);
             return;
@@ -93,57 +131,128 @@ export async function GET(request: NextRequest) {
 
           console.log('SSE: Sending deleteMessage event to client:', messageData);
           
-          // Use a more reliable message format for deletion events
+          // Use a reliable message format for deletion events
           const message = JSON.stringify({ 
             type: 'deleteMessage', 
-            data: messageData,
-            timestamp: Date.now() // Add timestamp to help prevent caching issues
+            data: { messageId: messageId.toString() },
+            timestamp: Date.now()
           });
           
           // Send deletion event multiple times to ensure delivery
-          // First immediate message
-          controller.enqueue(encoder.encode(`data: ${message}\n\n`));
+          // First immediate message - only if controller is still active
+          if (!safeEnqueue(`data: ${message}\n\n`)) {
+            return; // Exit if controller closed
+          }
           
-          // Second redundant message after a small delay (production reliability)
+          // Second redundant message after delay
           setTimeout(() => {
             try {
-              controller.enqueue(encoder.encode(`data: ${message}\n\n`));
+              safeEnqueue(`data: ${message}\n\n`);
             } catch (error) {
               console.error('Error sending delayed deletion event:', error);
             }
           }, 500);
-          
-          // Third message with an even longer delay as a last resort
-          setTimeout(() => {
-            try {
-              controller.enqueue(encoder.encode(`data: ${message}\n\n`));
-            } catch (error) {
-              console.error('Error sending final deletion event:', error);
-            }
-          }, 1500);
-          
         } catch (error) {
-          console.error('Error sending deletion event to client:', error);
+          console.error('Error handling deletion event:', error);
         }
+      };
+      
+      // Function to handle new message events (used by both Redis and EventBus)
+      const handleNewMessageEvent = (data: any) => {
+        try {
+          // Skip if controller is closed
+          if (isControllerClosed) {
+            return;
+          }
+          
+          console.log('Broadcasting new message to client:', data);
+          safeEnqueue(`data: ${JSON.stringify({ type: 'newMessage', data })}\n\n`);
+        } catch (error) {
+          console.error('Error sending new message event to client:', error);
+        }
+      };
+      
+      // Set up Redis subscriptions if Redis is configured (for production)
+      let redisSubscriber: any = null;
+      if (isRedisConfigured()) {
+        try {
+          redisSubscriber = getSubscriber();
+          redisCleanupNeeded = true;
+          
+          // Subscribe to Redis channels
+          redisSubscriber.subscribe(REDIS_CHANNELS.NEW_MESSAGE, REDIS_CHANNELS.DELETE_MESSAGE);
+          console.log('Subscribed to Redis channels for real-time updates');
+          
+          // Handle Redis messages
+          redisSubscriber.on('message', (channel: string, message: string) => {
+            // Skip processing if controller is closed
+            if (isControllerClosed) {
+              return;
+            }
+            
+            try {
+              const data = JSON.parse(message);
+              console.log(`Redis message received on channel ${channel}:`, data);
+              
+              if (channel === REDIS_CHANNELS.DELETE_MESSAGE) {
+                handleDeletionEvent(data);
+              } else if (channel === REDIS_CHANNELS.NEW_MESSAGE) {
+                handleNewMessageEvent(data.data);
+              }
+            } catch (error) {
+              console.error('Error handling Redis message:', error);
+            }
+          });
+        } catch (redisError) {
+          console.error('Failed to set up Redis subscriber:', redisError);
+          // Fall back to in-memory EventBus if Redis fails
+        }
+      }
+      
+      // Always set up EventBus subscriptions as backup or for local development
+      // Subscribe to message deletions from EventBus
+      const unsubscribeDelete = eventBus.subscribe('deleteMessage', (data) => {
+        // Skip if controller is closed
+        if (isControllerClosed) {
+          return;
+        }
+        
+        // Skip if the event came through Redis to avoid duplicate processing
+        if (isRedisConfigured() && redisSubscriber) {
+          return;
+        }
+        
+        handleDeletionEvent(data);
       });
       
       // Subscribe to new messages from EventBus
       const unsubscribeNew = eventBus.subscribe('newMessage', (data) => {
-        try {
-          console.log('EventBus: Broadcasting new message:', data);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'newMessage', data })}\n\n`));
-        } catch (error) {
-          console.error('Error sending new message event to client:', error);
+        // Skip if controller is closed
+        if (isControllerClosed) {
+          return;
         }
+        
+        // Skip if the event came through Redis to avoid duplicate processing
+        if (isRedisConfigured() && redisSubscriber) {
+          return;
+        }
+        
+        handleNewMessageEvent(data);
       });
       
       // Set up polling for new messages with optimized query
       pollInterval = setInterval(async () => {
+        // Skip if controller is closed
+        if (isControllerClosed) {
+          clearInterval(pollInterval!);
+          pollInterval = null;
+          return;
+        }
+        
         try {
           // Poll for new messages since last check with optimized projection
           const newMessages = await CommunityChat.find(
             { createdAt: { $gt: lastCheckedTime } },
-            // Only select the fields we need
             { userId: 1, username: 1, userImage: 1, message: 1, createdAt: 1 }
           )
           .sort({ createdAt: 1 })
@@ -156,13 +265,13 @@ export async function GET(request: NextRequest) {
             if (isMobile && newMessages.length > 3) {
               // Send only the latest 3 messages to mobile clients when there are many
               const latestMessages = newMessages.slice(-3);
-              controller.enqueue(encoder.encode(
+              safeEnqueue(
                 `data: ${JSON.stringify({ type: 'newMessages', data: latestMessages, count: newMessages.length })}\n\n`
-              ));
+              );
             } else {
-              controller.enqueue(encoder.encode(
+              safeEnqueue(
                 `data: ${JSON.stringify({ type: 'newMessages', data: newMessages })}\n\n`
-              ));
+              );
             }
             
             // Update last checked time to the most recent message time
@@ -174,12 +283,17 @@ export async function GET(request: NextRequest) {
       }, pollRate);
       
       // Add a dedicated interval to check for deleted messages
-      // This helps with deletion reliability in production
       deletionCheckInterval = setInterval(async () => {
+        // Skip if controller is closed
+        if (isControllerClosed) {
+          clearInterval(deletionCheckInterval!);
+          deletionCheckInterval = null;
+          return;
+        }
+        
         try {
           if (recentlyDeletedIds.size > 0) {
             // Remind clients about deleted messages periodically
-            // This helps ensure clients that missed the events still get updated
             const deletedIds = Array.from(recentlyDeletedIds);
             
             // Send a reminder for each deleted ID
@@ -192,16 +306,23 @@ export async function GET(request: NextRequest) {
                   reminder: true
                 });
                 
-                controller.enqueue(encoder.encode(`data: ${reminderMessage}\n\n`));
+                if (!safeEnqueue(`data: ${reminderMessage}\n\n`)) {
+                  break; // Stop processing if controller is closed
+                }
+                
                 console.log(`Sent deletion reminder for message ID: ${id}`);
               } catch (reminderError) {
                 console.error('Error sending deletion reminder:', reminderError);
               }
+              
+              // If controller was closed during the loop, exit
+              if (isControllerClosed) {
+                break;
+              }
             }
             
-            // Clear old deleted IDs after a while (keep for 1 minute)
+            // Keep list manageable
             if (deletedIds.length > 25) {
-              // Only keep the 25 most recent deletion IDs to prevent memory growth
               recentlyDeletedIds = new Set(deletedIds.slice(-25));
             }
           }
@@ -210,28 +331,48 @@ export async function GET(request: NextRequest) {
         }
       }, 10000); // Check every 10 seconds
       
-      // Add a dedicated ping interval to keep the connection alive
-      // Less frequent pings for mobile to reduce battery usage
+      // Add ping interval to keep connection alive
       pingInterval = setInterval(() => {
+        // Skip if controller is closed
+        if (isControllerClosed) {
+          clearInterval(pingInterval!);
+          pingInterval = null;
+          return;
+        }
+        
         try {
-          controller.enqueue(encoder.encode(`: ping\n\n`));
+          if (!safeEnqueue(`: ping\n\n`)) {
+            // If enqueueing fails, clean up
+            if (pingInterval) clearInterval(pingInterval);
+            if (pollInterval) clearInterval(pollInterval);
+            if (deletionCheckInterval) clearInterval(deletionCheckInterval);
+          }
         } catch (err) {
-          // If we can't send a ping, the connection is likely dead
+          // If ping fails, connection is likely dead - clean up
+          isControllerClosed = true;
           if (pingInterval) clearInterval(pingInterval);
           if (pollInterval) clearInterval(pollInterval);
           if (deletionCheckInterval) clearInterval(deletionCheckInterval);
         }
-      }, isMobile ? 45000 : 30000); // 45 seconds for mobile, 30 for desktop
+      }, isMobile ? 45000 : 30000);
       
-      // Store the unsubscribe functions for cleanup
+      // Store cleanup functions
       const unsubscribeFunctions = [unsubscribeDelete, unsubscribeNew];
-      
-      // Store unsubscribe functions on the controller for cleanup
       (controller as any).unsubscribeFunctions = unsubscribeFunctions;
+      (controller as any).redisSubscriber = redisSubscriber;
+      
+      // Store a reference to isControllerClosed for use in cancel()
+      (controller as any).isControllerClosed = isControllerClosed;
     },
     
     cancel() {
-      // Clean up event bus subscriptions
+      // Mark controller as closed
+      isControllerClosed = true;
+      if ((this as any).isControllerClosed !== undefined) {
+        (this as any).isControllerClosed = true;
+      }
+      
+      // Clean up EventBus subscriptions
       const unsubscribeFunctions = (this as any).unsubscribeFunctions;
       if (Array.isArray(unsubscribeFunctions)) {
         unsubscribeFunctions.forEach(unsubscribe => {
@@ -243,6 +384,19 @@ export async function GET(request: NextRequest) {
             }
           }
         });
+      }
+      
+      // Clean up Redis subscriptions
+      if (redisCleanupNeeded) {
+        const redisSubscriber = (this as any).redisSubscriber;
+        if (redisSubscriber) {
+          try {
+            redisSubscriber.unsubscribe(REDIS_CHANNELS.NEW_MESSAGE, REDIS_CHANNELS.DELETE_MESSAGE);
+            console.log('Unsubscribed from Redis channels');
+          } catch (error) {
+            console.error('Error unsubscribing from Redis channels:', error);
+          }
+        }
       }
       
       // Clear intervals

@@ -1,5 +1,7 @@
 // Simple in-memory pub/sub system for community chat
-// In production, you'd want to use Redis or similar for this
+// Hybrid approach that uses Redis in production when available
+
+import { isRedisConfigured, getPublisher, REDIS_CHANNELS } from './redis';
 
 type Subscriber = (message: any) => void;
 
@@ -168,38 +170,85 @@ export const eventBus = EventBus.getInstance();
 export function broadcastMessage(type: string, data: any) {
   console.log(`Broadcasting message to ${type}:`, data);
   
-  // Special handling for deletion events to improve reliability
+  // Normalize message format for consistency
+  let normalizedData = data;
+  let messageId: string | undefined;
+  
   if (type === 'deleteMessage') {
     // Normalize deletion message format for consistency
-    let messageId:any;
-    
     if (typeof data === 'string') {
       messageId = data;
-      data = { messageId: data };
+      normalizedData = { messageId: data };
     } else if (data && typeof data === 'object') {
       messageId = data.messageId || data._id || data.id;
       
       if (messageId) {
         // Ensure we have a consistent format
-        data = { messageId: messageId.toString() };
+        normalizedData = { messageId: messageId.toString() };
       }
     }
-    
-    // First publish immediately
-    eventBus.publish(type, data);
-    
-    // Add redundant publishes with delays to improve reliability in serverless environments
-    // This helps when there might be separate server instances
-    setTimeout(() => {
-      try {
-        console.log(`Broadcasting delayed deletion reminder for message:`, messageId);
-        eventBus.publish(type, { ...data, redundant: true, timestamp: Date.now() });
-      } catch (err) {
-        console.error("Error in redundant deletion broadcast:", err);
+  }
+  
+  // Always publish via in-memory EventBus for local development
+  eventBus.publish(type, normalizedData);
+  
+  // If Redis is configured, also publish via Redis
+  if (isRedisConfigured()) {
+    try {
+      const redisChannel = type === 'newMessage' 
+        ? REDIS_CHANNELS.NEW_MESSAGE 
+        : REDIS_CHANNELS.DELETE_MESSAGE;
+      
+      const message = JSON.stringify({
+        type,
+        data: normalizedData,
+        timestamp: Date.now()
+      });
+      
+      console.log(`Publishing to Redis channel ${redisChannel}:`, message);
+      
+      // Get Redis publisher and send message
+      const publisher = getPublisher();
+      publisher.publish(redisChannel, message);
+      
+      // For deletion events, send redundant messages with delay for reliability
+      if (type === 'deleteMessage') {
+        setTimeout(() => {
+          try {
+            console.log(`Redis: Sending delayed deletion message for:`, messageId);
+            const redundantMessage = JSON.stringify({
+              type,
+              data: normalizedData,
+              timestamp: Date.now(),
+              redundant: true
+            });
+            publisher.publish(redisChannel, redundantMessage);
+          } catch (err) {
+            console.error("Error in redundant Redis deletion broadcast:", err);
+          }
+        }, 800);
       }
-    }, 800);
+    } catch (redisError) {
+      console.error('Error publishing to Redis:', redisError);
+      
+      // If Redis fails, we already published to in-memory EventBus as fallback
+    }
   } else {
-    // Standard publish for non-deletion events
-    eventBus.publish(type, data);
+    // If Redis is not configured, use the fallback in-memory approach with redundancy
+    if (type === 'deleteMessage') {
+      // Add redundant publishes with delays to improve reliability
+      setTimeout(() => {
+        try {
+          console.log(`Broadcasting delayed deletion reminder for message:`, messageId);
+          eventBus.publish(type, { 
+            ...normalizedData, 
+            redundant: true, 
+            timestamp: Date.now() 
+          });
+        } catch (err) {
+          console.error("Error in redundant deletion broadcast:", err);
+        }
+      }, 800);
+    }
   }
 }

@@ -10,7 +10,8 @@
     "migrate:phone": "NODE_ENV=development ts-node database/migrations/addPhoneField.ts",
     "migrate:defaults": "NODE_ENV=development ts-node database/migrations/setUserDefaults.ts",
     "migrate:members": "NODE_ENV=development ts-node database/migrations/migrateSupportMembers.ts",
-    "migrate:fixmembers-schema": "NODE_ENV=development ts-node database/migrations/fixSupportMembersSchema.ts"
+    "migrate:fixmembers-schema": "NODE_ENV=development ts-node database/migrations/fixSupportMembersSchema.ts",
+    "test:redis": "node scripts/test-redis.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
@@ -22,6 +23,7 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",
     "framer-motion": "^12.7.3",
+    "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^8.12.1",
     "next": "15.2.3",
@@ -29,6 +31,7 @@
     "nodemailer": "^6.10.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "redis": "^4.7.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
   },
