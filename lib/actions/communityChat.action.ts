@@ -75,7 +75,7 @@ export async function addCommunityMessage(userId: string, message: string) {
   }
 }
 
-// Delete a message (only by the user who created it)
+// Update a message to "This message was deleted" instead of deleting it completely
 export async function deleteMessage(userId: string, messageId: string) {
   try {
     await connectToDatabase();
@@ -92,10 +92,19 @@ export async function deleteMessage(userId: string, messageId: string) {
       throw new Error("Not authorized to delete this message");
     }
     
-    // Delete message
-    await CommunityChat.findByIdAndDelete(messageId);
+    // Instead of deleting, update the message to show it was deleted
+    const updatedMessage = await CommunityChat.findByIdAndUpdate(
+      messageId,
+      {
+        message: "This message was deleted",
+        isDeleted: true,
+        originalMessage: message.message, // Optionally store the original message for audit purposes
+        deletedAt: new Date()
+      },
+      { new: true } // Return the updated document
+    );
     
-    return { success: true };
+    return { success: true, data: updatedMessage };
   } catch (error) {
     console.error("Error deleting community message:", error);
     throw error;

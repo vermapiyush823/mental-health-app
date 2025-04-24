@@ -13,19 +13,30 @@ export async function DELETE(req: NextRequest) {
       );
     }
     
+    // This now updates the message to "This message was deleted"
     const result = await deleteMessage(userId, messageId);
     
-    // Broadcast the deletion via EventBus - retry logic for production reliability
+    // Broadcast the message update via EventBus - with retry logic 
     const broadcastWithRetry = async (attempts = 0) => {
       try {
         // Use a consistent format for deletion events
-        broadcastMessage('deleteMessage', { messageId });
-        console.log('Message deletion broadcasted via EventBus:', messageId);
+        // Include isDeleted flag to indicate soft deletion
+        broadcastMessage('deleteMessage', { 
+          messageId,
+          isDeleted: true,  
+          message: "This message was deleted" 
+        });
+        console.log('Message soft-deletion broadcasted via EventBus:', messageId);
         
         // Send a second broadcast after a delay for redundancy
         setTimeout(() => {
           try {
-            broadcastMessage('deleteMessage', { messageId });
+            broadcastMessage('deleteMessage', { 
+              messageId,
+              isDeleted: true,
+              message: "This message was deleted",
+              timestamp: Date.now() // Add timestamp to help prevent caching issues
+            });
             console.log('Redundant message deletion broadcasted via EventBus:', messageId);
           } catch (error) {
             console.error("Error in redundant broadcast:", error);
@@ -56,9 +67,9 @@ export async function DELETE(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Error deleting community message:", error);
+    console.error("Error updating community message:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to delete community message" },
+      { error: error.message || "Failed to update community message" },
       { status: 500 }
     );
   }
