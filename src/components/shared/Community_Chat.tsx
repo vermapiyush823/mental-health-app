@@ -1,10 +1,11 @@
 'use client'
 import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Send from '../../../assets/icons/send.svg'
-import { TrashIcon } from '@heroicons/react/24/outline'
+import { TrashIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
 
 interface Message {
   _id: string;
@@ -20,36 +21,25 @@ interface CommunityChatProps {
 
 // Avatar component to display first letter of username
 const UserAvatar = ({ username, isDarkMode }: { username: string; isDarkMode: boolean }) => {
-  // Get first letter of username, default to '?' if empty
-  const initial = username && username.length > 0 ? username[0].toUpperCase() : '?';
-  
-  // Generate a consistent color based on username
-  const getColorFromName = (name: string) => {
+  // Create a color based on the username
+  const getColorFromUsername = (name: string) => {
     const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
-      'bg-purple-500', 'bg-pink-500', 'bg-indigo-500',
-      'bg-teal-500', 'bg-red-500', 'bg-orange-500'
+      'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
+      'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'
     ];
-    
-    // Simple hash function to get consistent color
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    
-    // Use hash to select a color
-    const colorIndex = Math.abs(hash) % colors.length;
-    return colors[colorIndex];
+    const index = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0) % colors.length;
+    return colors[index];
   };
   
-  const bgColorClass = getColorFromName(username);
-  
+  const avatarColor = getColorFromUsername(username);
+  const initial = username.charAt(0).toUpperCase();
+
   return (
-    <div className={`flex items-center mx-1 justify-center h-8 w-8 rounded-full ${bgColorClass} text-white font-medium`}>
-      {initial}
+    <div className={`flex items-center justify-center w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 rounded-full mr-1.5 xs:mr-2 ${avatarColor} flex-shrink-0 shadow-md`}>
+      <span className="text-[10px] xs:text-xs sm:text-sm font-medium text-white">{initial}</span>
     </div>
   );
-};
+}
 
 const Community_Chat = ({ userId }: CommunityChatProps) => {
   const [mounted, setMounted] = useState(false)
@@ -62,6 +52,13 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
   const [isConnected, setIsConnected] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
+  
+  // Add state for message deletion confirmation
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  // Add state for delete operation loading
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Add mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -237,32 +234,32 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
           // Handle pings or actual data
           if (event.data.startsWith(':')) {
             // This is a ping, just log it
-            console.log('Received ping');
+            console.log('SSE: Received ping');
             return;
           }
           
-          console.log('SSE message received:', event.data);
+          console.log('SSE: Raw message received:', event.data);
           try {
             const data = JSON.parse(event.data);
-            console.log('Parsed SSE data:', data);
+            console.log('SSE: Parsed data:', data);
             
             switch (data.type) {
               case 'connection':
-                console.log('Connected to SSE stream', data);
+                console.log('SSE: Connected to stream', data);
                 setIsConnected(true);
                 break;
                 
               case 'messages':
                 // Handle batch of messages
                 if (Array.isArray(data.data)) {
-                  console.log(`Received batch of ${data.data.length} messages`);
+                  console.log(`SSE: Received batch of ${data.data.length} messages`);
                   setMessages(prevMessages => {
                     // Create a map of existing messages for deduplication
                     const existingIds = new Set(prevMessages.map(msg => msg._id));
                     
                     // Add only new messages
                     const newMessages = data.data.filter((msg: Message) => !existingIds.has(msg._id));
-                    console.log(`Adding ${newMessages.length} new messages to state`);
+                    console.log(`SSE: Adding ${newMessages.length} new messages to state`);
                     
                     if (newMessages.length > 0) {
                       return [...prevMessages, ...newMessages];
@@ -275,14 +272,14 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
               case 'newMessages':
                 // Handle a batch of new messages from DB polling
                 if (Array.isArray(data.data)) {
-                  console.log(`Received ${data.data.length} new messages from polling`);
+                  console.log(`SSE: Received ${data.data.length} new messages from polling`);
                   setMessages(prevMessages => {
                     // Create a map of existing messages for deduplication
                     const existingIds = new Set(prevMessages.map(msg => msg._id));
                     
                     // Add only new messages
                     const newMessages = data.data.filter((msg: Message) => !existingIds.has(msg._id));
-                    console.log(`Adding ${newMessages.length} new messages to state`);
+                    console.log(`SSE: Adding ${newMessages.length} new messages to state`);
                     
                     if (newMessages.length > 0) {
                       return [...prevMessages, ...newMessages];
@@ -294,7 +291,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                 
               case 'newMessage':
                 // Handle single new message
-                console.log('Received new message:', data.data);
+                console.log('SSE: Received new message:', data.data);
                 setMessages(prevMessages => {
                   // Check if message already exists (prevent duplicates)
                   const exists = prevMessages.some(msg => msg._id === data.data._id);
@@ -307,17 +304,34 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                 
               case 'deleteMessage':
                 // Handle message deletion
-                console.log('Received message deletion:', data.data);
-                setMessages(prevMessages => 
-                  prevMessages.filter(msg => msg._id !== data.data.messageId)
-                );
+                console.log('SSE: Received deletion event:', data);
+                console.log('SSE: Data structure:', JSON.stringify(data));
+                
+                if (!data.data || typeof data.data.messageId === 'undefined') {
+                  console.error('SSE: Invalid deletion format, data:', data);
+                  return;
+                }
+                
+                const messageIdToDelete = data.data.messageId;
+                console.log('SSE: Removing message with ID:', messageIdToDelete);
+                
+                setMessages(prevMessages => {
+                  const beforeCount = prevMessages.length;
+                  const filteredMessages = prevMessages.filter(msg => msg._id !== messageIdToDelete);
+                  const afterCount = filteredMessages.length;
+                  
+                  console.log(`SSE: Messages before: ${beforeCount}, after: ${afterCount}, removed: ${beforeCount - afterCount}`);
+                  
+                  // Only update state if we actually removed something
+                  return filteredMessages;
+                });
                 break;
                 
               default:
-                console.log('Unknown SSE event type:', data.type);
+                console.log('SSE: Unknown event type:', data.type);
             }
           } catch (error) {
-            console.error('Error parsing SSE data:', error);
+            console.error('SSE: Error parsing data:', error, 'Raw data was:', event.data);
           }
         };
         
@@ -413,6 +427,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
 
   // Delete a message (only if it belongs to current user)
   const deleteUserMessage = async (messageId: string) => {
+    setIsDeleting(true);
     try {
       const response = await fetch('/api/community-chat/delete', {
         method: 'DELETE',
@@ -426,13 +441,22 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
       })
       
       if (!response.ok) {
-        throw new Error('Failed to delete message')
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete message');
       }
       
-      // Deletion will be reflected via SSE
-    } catch (err) {
-      console.error('Error deleting message:', err)
-      setError('Failed to delete message. Please try again.')
+      // Immediately update UI by removing the message from state
+      setMessages(prevMessages => 
+        prevMessages.filter(msg => msg._id !== messageId)
+      );
+      
+      setError(null);
+      
+    } catch (err:any) {
+      console.error('Error deleting message:', err);
+      setError(`Failed to delete message: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -461,7 +485,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className={`flex flex-col h-[80vh] sm:h-[81.9vh] ${cardBgClass} gap-y-4 sm:py-6 sm:px-8 py-2 px-4 rounded-lg overflow-hidden relative`}
+      className={`flex flex-col h-[calc(100vh-120px)] xs:h-[80vh] sm:h-[81.9vh] ${cardBgClass} gap-y-2 xs:gap-y-4 sm:py-6 sm:px-8 py-2 px-3 xs:px-4 rounded-lg overflow-hidden relative`}
     >
       {/* Gradient overlay */}
       <div className={gradientOverlay}></div>
@@ -470,18 +494,18 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
       <div className="flex justify-between items-center z-10">
         <motion.h1 
           variants={messageVariants} 
-          className='text-lg font-bold tracking-wide flex items-center gap-2 z-10'
+          className='text-base xs:text-lg font-bold tracking-wide flex items-center gap-2 z-10'
         >
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
             Community Chat
           </span>
           {isConnected && (
             <span className="flex items-center">
-              <span className="relative flex h-3 w-3">
+              <span className="relative flex h-2 w-2 xs:h-3 xs:w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 xs:h-3 xs:w-3 bg-green-500"></span>
               </span>
-              <span className="text-xs text-gray-400 ml-2">live</span>
+              <span className="text-[10px] xs:text-xs text-gray-400 ml-1 xs:ml-2">live</span>
             </span>
           )}
         </motion.h1>
@@ -489,17 +513,17 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
 
       {/* Messages Container */}
       <div 
-        className={`flex-1 overflow-y-auto p-4 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80 border border-gray-200'} space-y-4 rounded-md scroll-smooth z-10`}
+        className={`flex-1 overflow-y-auto p-2 xs:p-4 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80 border border-gray-200'} space-y-3 xs:space-y-4 rounded-md scroll-smooth z-10`}
       >
         {loadingMessages ? (
-          <div className="flex flex-col gap-3 animate-pulse">
-            <div className={`h-16 ${isDarkMode ? 'bg-gray-600/70' : 'bg-gray-200'} rounded-lg`}></div>
-            <div className={`h-16 ${isDarkMode ? 'bg-gray-600/70' : 'bg-gray-200'} rounded-lg`}></div>
-            <div className={`h-16 ${isDarkMode ? 'bg-gray-600/70' : 'bg-gray-200'} rounded-lg`}></div>
+          <div className="flex flex-col gap-2 xs:gap-3 animate-pulse">
+            <div className={`h-12 xs:h-16 ${isDarkMode ? 'bg-gray-600/70' : 'bg-gray-200'} rounded-lg`}></div>
+            <div className={`h-12 xs:h-16 ${isDarkMode ? 'bg-gray-600/70' : 'bg-gray-200'} rounded-lg`}></div>
+            <div className={`h-12 xs:h-16 ${isDarkMode ? 'bg-gray-600/70' : 'bg-gray-200'} rounded-lg`}></div>
           </div>
         ) : messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
-            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-500'}>
+            <p className={`text-sm xs:text-base ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
               No messages yet. Be the first to say hello!
             </p>
           </div>
@@ -510,22 +534,22 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
               variants={messageVariants}
               className={`flex ${msg.userId === userId ? "justify-end" : "justify-start"}`}
             >
-              <div className="flex items-start max-w-[85%] group">
+              <div className="flex items-start max-w-[90%] xs:max-w-[85%] group">
                 {msg.userId !== userId && (
                   <UserAvatar username={msg.username} isDarkMode={isDarkMode} />
                 )}
                 
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <div className="flex items-center gap-1 xs:gap-2">
+                    <span className={`text-[10px] xs:text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       {msg.userId === userId ? 'You' : msg.username}
                     </span>
-                    <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <span className={`text-[10px] xs:text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {formatTime(msg.createdAt)}
                     </span>
                   </div>
                   
-                  <div className={`p-3 text-sm rounded-lg shadow-md ${
+                  <div className={`p-2 xs:p-3 text-xs xs:text-sm rounded-lg shadow-md ${
                     msg.userId === userId 
                       ? isDarkMode 
                         ? "bg-gradient-to-r from-purple-600 to-indigo-700 text-white" 
@@ -541,14 +565,17 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                 {/* Delete button only for user's own messages */}
                 {msg.userId === userId && (
                   <button 
-                    onClick={() => deleteUserMessage(msg._id)}
-                    className={`ml-2 p-1.5 rounded-full transition-opacity ${
+                    onClick={() => {
+                      setMessageToDelete(msg._id);
+                      setShowDeleteConfirm(true);
+                    }}
+                    className={`ml-1 xs:ml-2 p-1 xs:p-1.5 rounded-full transition-opacity ${
                       isDarkMode 
                         ? 'bg-gray-700 hover:bg-red-900/70 text-gray-300 hover:text-red-300' 
                         : 'bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600'
                     }`}
                   >
-                    <TrashIcon className="w-3.5 h-3.5" />
+                    <TrashIcon className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
                   </button>
                 )}
                 
@@ -563,7 +590,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
         
         {/* Error message if any */}
         {error && (
-          <div className={`p-3 text-sm rounded-lg ${
+          <div className={`p-2 xs:p-3 text-xs xs:text-sm rounded-lg ${
             isDarkMode ? 'bg-red-900/20 text-red-300' : 'bg-red-100 text-red-600'
           }`}>
             {error}
@@ -574,15 +601,85 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Delete confirmation dialog */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 flex items-center justify-center z-50 bg-black/50"
+            onClick={(e) => {
+              // Close when clicking outside the modal
+              if (e.target === e.currentTarget) {
+                setShowDeleteConfirm(false);
+              }
+            }}
+            role="dialog"
+            aria-labelledby="delete-dialog-title"
+            aria-describedby="delete-dialog-description"
+          >
+            <div className={`p-4 xs:p-6 rounded-lg shadow-lg max-w-xs sm:max-w-sm w-full mx-4 ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
+                <h2 id="delete-dialog-title" className="text-sm xs:text-base font-semibold">Confirm Deletion</h2>
+                <button 
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="ml-auto hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full p-1"
+                  aria-label="Close"
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+              </div>
+              <p id="delete-dialog-description" className="text-xs xs:text-sm mb-4">Are you sure you want to delete this message? This action cannot be undone.</p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className={`px-3 py-1.5 text-xs xs:text-sm rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (messageToDelete) {
+                      deleteUserMessage(messageToDelete);
+                      setMessageToDelete(null);
+                    }
+                    setShowDeleteConfirm(false);
+                  }}
+                  className={`px-3 py-1.5 text-xs xs:text-sm rounded-lg ${isDeleting 
+                    ? 'bg-red-400 cursor-not-allowed' 
+                    : 'bg-red-500 hover:bg-red-600'} text-white flex items-center gap-1`}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <>
+                      <svg className="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <span>Delete</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Message input */}
-      <div className={`${isDarkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'} py-3 px-4 flex gap-x-2 items-center z-10`}>
+      <div className={`${isDarkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'} py-2 xs:py-3 px-2 xs:px-4 flex gap-x-2 items-center z-10`}>
         <input
           type="text"
-          className={`outline-none p-3 w-full rounded-lg border ${
+          className={`outline-none p-2 xs:p-3 w-full rounded-lg border ${
             isDarkMode 
               ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
               : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
-          } focus:outline-none focus:ring-2 transition-all duration-300 ${
+          } focus:outline-none focus:ring-1 xs:focus:ring-2 text-sm xs:text-base transition-all duration-300 ${
             isDarkMode ? 'focus:ring-purple-500/50' : 'focus:ring-indigo-500/50'
           }`}
           placeholder="Type your message here..."
@@ -595,7 +692,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={sendMessage} 
-          className={`h-full px-4 py-3 w-fit ${
+          className={`h-full px-3 xs:px-4 py-2 xs:py-3 w-fit ${
             isLoading 
               ? 'bg-gray-400' 
               : isDarkMode
@@ -604,7 +701,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
           } text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300`}
           disabled={isLoading || !input.trim()}
         >
-          <Image src={Send} alt="Send Icon" width={20} height={20} />
+          <Image src={Send} alt="Send Icon" width={isMobile ? 16 : 20} height={isMobile ? 16 : 20} />
         </motion.button>
       </div>
     </motion.div>

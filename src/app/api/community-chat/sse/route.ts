@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { connectToDatabase } from '../../../../../lib/mongoose';
 import CommunityChat from '../../../../../database/models/community_chat';
+import { eventBus } from '../../../../../lib/communityChat';
 
 // This needs to be dynamic to keep the connection alive
 export const dynamic = 'force-dynamic';
@@ -55,6 +56,27 @@ export async function GET(request: NextRequest) {
         console.error('Error fetching initial messages:', error);
       }
       
+      // Subscribe to message deletions from EventBus
+      const unsubscribeDelete = eventBus.subscribe('deleteMessage', (data) => {
+        try {
+          const messageData = { messageId: data.messageId };
+          console.log('SSE: Sending deleteMessage event to client:', messageData);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'deleteMessage', data: messageData })}\n\n`));
+        } catch (error) {
+          console.error('Error sending deletion event to client:', error);
+        }
+      });
+      
+      // Subscribe to new messages from EventBus
+      const unsubscribeNew = eventBus.subscribe('newMessage', (data) => {
+        try {
+          console.log('EventBus: Broadcasting new message:', data);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'newMessage', data })}\n\n`));
+        } catch (error) {
+          console.error('Error sending new message event to client:', error);
+        }
+      });
+      
       // Set up polling for new messages with optimized query
       pollInterval = setInterval(async () => {
         try {
@@ -102,9 +124,29 @@ export async function GET(request: NextRequest) {
           if (pollInterval) clearInterval(pollInterval);
         }
       }, isMobile ? 45000 : 30000); // 45 seconds for mobile, 30 for desktop
+      
+      // Store the unsubscribe functions for cleanup
+      const unsubscribeFunctions = [unsubscribeDelete, unsubscribeNew];
+      
+      // Store unsubscribe functions on the controller for cleanup
+      (controller as any).unsubscribeFunctions = unsubscribeFunctions;
     },
     
     cancel() {
+      // Clean up event bus subscriptions
+      const unsubscribeFunctions = (this as any).unsubscribeFunctions;
+      if (Array.isArray(unsubscribeFunctions)) {
+        unsubscribeFunctions.forEach(unsubscribe => {
+          if (typeof unsubscribe === 'function') {
+            try {
+              unsubscribe();
+            } catch (error) {
+              console.error('Error unsubscribing from EventBus:', error);
+            }
+          }
+        });
+      }
+      
       // Clear intervals
       if (pollInterval) {
         clearInterval(pollInterval);
@@ -116,7 +158,7 @@ export async function GET(request: NextRequest) {
         pingInterval = null;
       }
       
-      console.log('Client disconnected, cleaned up polling');
+      console.log('Client disconnected, cleaned up polling and subscriptions');
     }
   });
 

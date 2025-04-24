@@ -17,6 +17,7 @@ export async function DELETE(req: NextRequest) {
     
     // Broadcast the deletion via EventBus
     try {
+      // Directly pass messageId to match the pattern used in add route
       broadcastMessage('deleteMessage', { messageId });
       console.log('Message deletion broadcasted via EventBus:', messageId);
     } catch (broadcastError) {

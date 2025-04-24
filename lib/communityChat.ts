@@ -14,6 +14,10 @@ class EventBus {
   // Track connection status
   private initialized = false;
   
+  // Track error counts by subscriber for automatic cleanup
+  private errorCounts: WeakMap<Subscriber, number> = new WeakMap();
+  private MAX_ERRORS = 3; // Maximum errors before auto-unsubscribe
+  
   private constructor() {}
   
   public static getInstance(): EventBus {
@@ -32,17 +36,28 @@ class EventBus {
     this.subscribers.get(channel)?.add(callback);
     console.log(`New subscriber added to ${channel}, total: ${this.subscribers.get(channel)?.size || 0}`);
     
+    // Initialize error count
+    this.errorCounts.set(callback, 0);
+    
     // Return unsubscribe function
     return () => {
-      const subs = this.subscribers.get(channel);
-      if (subs) {
-        subs.delete(callback);
-        console.log(`Subscriber removed from ${channel}, remaining: ${subs.size}`);
-        if (subs.size === 0) {
-          this.subscribers.delete(channel);
-        }
-      }
+      this.unsubscribe(channel, callback);
     };
+  }
+  
+  // Unsubscribe helper
+  private unsubscribe(channel: string, callback: Subscriber): void {
+    const subs = this.subscribers.get(channel);
+    if (subs) {
+      subs.delete(callback);
+      console.log(`Subscriber removed from ${channel}, remaining: ${subs.size}`);
+      if (subs.size === 0) {
+        this.subscribers.delete(channel);
+      }
+    }
+    
+    // Clean up error tracking
+    this.errorCounts.delete(callback);
   }
   
   // Publish to a channel
@@ -61,21 +76,55 @@ class EventBus {
     }
     
     // Handle message deletions in the recent messages queue
-    if (channel === 'deleteMessage' && message && message.messageId) {
-      this.recentMessages = this.recentMessages.filter(
-        msg => msg._id !== message.messageId
-      );
+    if (channel === 'deleteMessage') {
+      // Extract messageId from any potential structure
+      let messageId = null;
+      
+      // Handle different possible message structures
+      if (typeof message === 'string') {
+        messageId = message;
+      } else if (message && typeof message === 'object') {
+        // Try to extract messageId from different possible paths
+        messageId = message.messageId || 
+                   (message.data && message.data.messageId) || 
+                   message._id ||
+                   message.id;
+      }
+      
+      if (messageId) {
+        console.log(`Filtering out deleted message with ID: ${messageId}`);
+        this.recentMessages = this.recentMessages.filter(
+          msg => msg._id !== messageId
+        );
+      } else {
+        console.warn('Received deleteMessage event without a valid messageId structure:', message);
+      }
     }
     
     // Notify all subscribers
     const subs = this.subscribers.get(channel);
     if (subs) {
       console.log(`Broadcasting to ${subs.size} subscribers`);
-      subs.forEach(callback => {
+      
+      // Convert to array to avoid issues with deleting during iteration
+      const subscribersArray = Array.from(subs);
+      
+      subscribersArray.forEach(callback => {
         try {
           callback(message);
         } catch (error) {
           console.error('Error in subscriber callback:', error);
+          
+          // Track errors for this subscriber
+          const currentErrorCount = this.errorCounts.get(callback) || 0;
+          const newErrorCount = currentErrorCount + 1;
+          this.errorCounts.set(callback, newErrorCount);
+          
+          // Auto-unsubscribe after too many errors (likely a closed connection)
+          if (newErrorCount >= this.MAX_ERRORS) {
+            console.log(`Auto-unsubscribing client after ${newErrorCount} errors`);
+            this.unsubscribe(channel, callback);
+          }
         }
       });
     }
@@ -97,5 +146,6 @@ export const eventBus = EventBus.getInstance();
 
 // Export a function to broadcast messages through the event bus
 export function broadcastMessage(type: string, data: any) {
+  console.log(`Broadcasting message to ${type}:`, data);
   eventBus.publish(type, data);
 }
