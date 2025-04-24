@@ -29,9 +29,13 @@ export async function GET(request: NextRequest) {
   // Store last checked timestamp
   let lastCheckedTime = new Date();
   
+  // Keep track of deleted message IDs for resilient deletion
+  let recentlyDeletedIds = new Set<string>();
+  
   // Create variables for intervals outside of the stream to reference them later
   let pollInterval: NodeJS.Timeout | null = null;
   let pingInterval: NodeJS.Timeout | null = null;
+  let deletionCheckInterval: NodeJS.Timeout | null = null;
   
   const stream = new ReadableStream({
     async start(controller) {
@@ -61,13 +65,15 @@ export async function GET(request: NextRequest) {
         try {
           // Handle multiple possible data structures for better compatibility
           let messageData;
+          let messageId = null;
           
           if (typeof data === 'string') {
             // If it's just a string ID
+            messageId = data;
             messageData = { messageId: data };
           } else if (data && typeof data === 'object') {
             // Ensure we have a consistent structure regardless of input format
-            const messageId = data.messageId || (data.data && data.data.messageId) || data._id || data.id;
+            messageId = data.messageId || (data.data && data.data.messageId) || data._id || data.id;
             
             if (!messageId) {
               console.error('SSE: Invalid deletion data format - no messageId found:', data);
@@ -80,6 +86,11 @@ export async function GET(request: NextRequest) {
             return;
           }
           
+          // Add to our set of recently deleted messages
+          if (messageId) {
+            recentlyDeletedIds.add(messageId.toString());
+          }
+
           console.log('SSE: Sending deleteMessage event to client:', messageData);
           
           // Use a more reliable message format for deletion events
@@ -89,11 +100,11 @@ export async function GET(request: NextRequest) {
             timestamp: Date.now() // Add timestamp to help prevent caching issues
           });
           
-          // Send multiple times to ensure delivery (production reliability)
+          // Send deletion event multiple times to ensure delivery
+          // First immediate message
           controller.enqueue(encoder.encode(`data: ${message}\n\n`));
           
-          // Send a duplicate deletion event after a small delay as a backup
-          // This helps in production where network conditions may be unstable
+          // Second redundant message after a small delay (production reliability)
           setTimeout(() => {
             try {
               controller.enqueue(encoder.encode(`data: ${message}\n\n`));
@@ -101,6 +112,15 @@ export async function GET(request: NextRequest) {
               console.error('Error sending delayed deletion event:', error);
             }
           }, 500);
+          
+          // Third message with an even longer delay as a last resort
+          setTimeout(() => {
+            try {
+              controller.enqueue(encoder.encode(`data: ${message}\n\n`));
+            } catch (error) {
+              console.error('Error sending final deletion event:', error);
+            }
+          }, 1500);
           
         } catch (error) {
           console.error('Error sending deletion event to client:', error);
@@ -153,6 +173,43 @@ export async function GET(request: NextRequest) {
         }
       }, pollRate);
       
+      // Add a dedicated interval to check for deleted messages
+      // This helps with deletion reliability in production
+      deletionCheckInterval = setInterval(async () => {
+        try {
+          if (recentlyDeletedIds.size > 0) {
+            // Remind clients about deleted messages periodically
+            // This helps ensure clients that missed the events still get updated
+            const deletedIds = Array.from(recentlyDeletedIds);
+            
+            // Send a reminder for each deleted ID
+            for (const id of deletedIds) {
+              try {
+                const reminderMessage = JSON.stringify({
+                  type: 'deleteMessage',
+                  data: { messageId: id },
+                  timestamp: Date.now(),
+                  reminder: true
+                });
+                
+                controller.enqueue(encoder.encode(`data: ${reminderMessage}\n\n`));
+                console.log(`Sent deletion reminder for message ID: ${id}`);
+              } catch (reminderError) {
+                console.error('Error sending deletion reminder:', reminderError);
+              }
+            }
+            
+            // Clear old deleted IDs after a while (keep for 1 minute)
+            if (deletedIds.length > 25) {
+              // Only keep the 25 most recent deletion IDs to prevent memory growth
+              recentlyDeletedIds = new Set(deletedIds.slice(-25));
+            }
+          }
+        } catch (error) {
+          console.error('Error in deletion check interval:', error);
+        }
+      }, 10000); // Check every 10 seconds
+      
       // Add a dedicated ping interval to keep the connection alive
       // Less frequent pings for mobile to reduce battery usage
       pingInterval = setInterval(() => {
@@ -162,6 +219,7 @@ export async function GET(request: NextRequest) {
           // If we can't send a ping, the connection is likely dead
           if (pingInterval) clearInterval(pingInterval);
           if (pollInterval) clearInterval(pollInterval);
+          if (deletionCheckInterval) clearInterval(deletionCheckInterval);
         }
       }, isMobile ? 45000 : 30000); // 45 seconds for mobile, 30 for desktop
       
@@ -196,6 +254,11 @@ export async function GET(request: NextRequest) {
       if (pingInterval) {
         clearInterval(pingInterval);
         pingInterval = null;
+      }
+      
+      if (deletionCheckInterval) {
+        clearInterval(deletionCheckInterval);
+        deletionCheckInterval = null;
       }
       
       console.log('Client disconnected, cleaned up polling and subscriptions');

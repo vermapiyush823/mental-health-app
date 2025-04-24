@@ -499,6 +499,29 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
         });
       }
       
+      // 4. Production enhancement: Add a secondary check after a delay
+      // This helps in cases where the SSE deletion event might be missed
+      setTimeout(async () => {
+        try {
+          // Double-check that the message is truly gone from the server
+          const verifyResponse = await fetch(`/api/community-chat?limit=15&timestamp=${Date.now() + 1000}`);
+          
+          if (verifyResponse.ok) {
+            const verifyData = await verifyResponse.json();
+            // Check if the message still exists on the server
+            const deletedMessageStillExists = verifyData.data.some((msg: Message) => msg._id === messageId);
+            
+            if (deletedMessageStillExists) {
+              console.log('Message still exists after deletion, forcing another client-side removal');
+              // Force remove it again from the client
+              setMessages(prevMsgs => prevMsgs.filter(msg => msg._id !== messageId));
+            }
+          }
+        } catch (err) {
+          console.error('Error in verification check:', err);
+        }
+      }, 2000); // Wait 2 seconds before verification
+      
       setError(null);
       
     } catch (err: any) {

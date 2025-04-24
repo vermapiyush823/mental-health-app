@@ -167,5 +167,39 @@ export const eventBus = EventBus.getInstance();
 // Export a function to broadcast messages through the event bus
 export function broadcastMessage(type: string, data: any) {
   console.log(`Broadcasting message to ${type}:`, data);
-  eventBus.publish(type, data);
+  
+  // Special handling for deletion events to improve reliability
+  if (type === 'deleteMessage') {
+    // Normalize deletion message format for consistency
+    let messageId:any;
+    
+    if (typeof data === 'string') {
+      messageId = data;
+      data = { messageId: data };
+    } else if (data && typeof data === 'object') {
+      messageId = data.messageId || data._id || data.id;
+      
+      if (messageId) {
+        // Ensure we have a consistent format
+        data = { messageId: messageId.toString() };
+      }
+    }
+    
+    // First publish immediately
+    eventBus.publish(type, data);
+    
+    // Add redundant publishes with delays to improve reliability in serverless environments
+    // This helps when there might be separate server instances
+    setTimeout(() => {
+      try {
+        console.log(`Broadcasting delayed deletion reminder for message:`, messageId);
+        eventBus.publish(type, { ...data, redundant: true, timestamp: Date.now() });
+      } catch (err) {
+        console.error("Error in redundant deletion broadcast:", err);
+      }
+    }, 800);
+  } else {
+    // Standard publish for non-deletion events
+    eventBus.publish(type, data);
+  }
 }
