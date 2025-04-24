@@ -11,6 +11,10 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 30);
     const skip = parseInt(searchParams.get("skip") || "0");
     
+    // Cache-busting timestamp parameter (used by message deletion code)
+    // We don't actually need to use it - just having it in the URL prevents browser caching
+    const timestamp = searchParams.get("timestamp");
+    
     // Add a timeout promise to prevent hanging
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Request timed out')), 8000); // 8 second timeout
@@ -22,7 +26,12 @@ export async function GET(req: NextRequest) {
     
     return NextResponse.json(
       { success: true, data: messages },
-      { status: 200 }
+      { status: 200, headers: {
+        // Ensure client doesn't cache this response
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }}
     );
   } catch (error: any) {
     console.error("Error fetching community messages:", error);

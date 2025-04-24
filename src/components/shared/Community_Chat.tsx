@@ -454,18 +454,12 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
     }
     
     setIsDeleting(true);
+    
     try {
-      // 1. Optimistic update - remove message from UI immediately
-      console.log('Optimistically removing message:', messageId);
-      
-      // First, save the current messages for potential rollback
-      const originalMessages = [...messages];
-      
-      // Update UI optimistically
+      // 1. Immediately update the UI (optimistic update)
       setMessages(prevMessages => prevMessages.filter(msg => msg._id !== messageId));
       
-      // 2. Send deletion request to server
-      console.log('Sending delete request to server for message:', messageId);
+      // 2. Call the API to delete the message
       const response = await fetch('/api/community-chat/delete', {
         method: 'DELETE',
         headers: {
@@ -477,40 +471,41 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
         })
       });
       
-      const data = await response.json();
-      
       if (!response.ok) {
-        // Rollback optimistic update if server request failed
-        console.error('Server deletion failed, rolling back:', data.error);
-        setMessages(originalMessages);
-        throw new Error(data.error || 'Failed to delete message');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete message');
       }
       
-      // 3. Force a manual message state update after successful deletion
-      // This ensures the message is removed even if SSE fails to deliver the event
-      console.log('Server confirmed deletion, ensuring message removed from state');
-      setMessages(current => current.filter(msg => msg._id !== messageId));
+      // 3. Production-specific fix: Force refresh messages from server
+      // This ensures deleted messages are truly removed even if SSE fails
+      const fetchResponse = await fetch(`/api/community-chat?limit=15&timestamp=${Date.now()}`);
       
-      // 4. After a delay, verify message is really gone (for production reliability)
-      setTimeout(() => {
-        setMessages(current => {
-          // Check if the message is still in state somehow
-          const messageStillExists = current.some(msg => msg._id === messageId);
+      if (fetchResponse.ok) {
+        const data = await fetchResponse.json();
+        // Carefully merge existing and fetched messages to avoid jumps
+        setMessages(prevMessages => {
+          // Create a set of all message IDs from the server response
+          const serverMessageIds = new Set(data.data.map((msg: Message) => msg._id));
           
-          if (messageStillExists) {
-            console.log('Message still in state after deletion, forcing removal');
-            // Force remove it if it still exists
-            return current.filter(msg => msg._id !== messageId);
-          }
-          return current;
+          // Filter out any messages from our current state that aren't in the server response
+          // (including the deleted message and any others that might have been deleted elsewhere)
+          const validExistingMessages = prevMessages.filter(msg => serverMessageIds.has(msg._id));
+          
+          // Combine with any new messages from the server that we don't already have
+          const existingIds = new Set(validExistingMessages.map(msg => msg._id));
+          const newMessages = data.data.filter((msg: Message) => !existingIds.has(msg._id));
+          
+          return [...validExistingMessages, ...newMessages];
         });
-      }, 2000); // Check after 2 seconds as a fallback
+      }
       
       setError(null);
       
     } catch (err: any) {
       console.error('Error deleting message:', err);
       setError(`Failed to delete message: ${err.message}`);
+      // If there's an error, restore the message by refreshing
+      fetchMessages();
     } finally {
       setIsDeleting(false);
     }
