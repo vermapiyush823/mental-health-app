@@ -93,15 +93,35 @@ class EventBus {
       
       if (messageId) {
         console.log(`Filtering out deleted message with ID: ${messageId}`);
+        // Ensure string comparison for more reliable equality checks
+        const messageIdStr = messageId.toString();
         this.recentMessages = this.recentMessages.filter(
-          msg => msg._id !== messageId
+          msg => msg._id !== messageIdStr && msg._id?.toString() !== messageIdStr
         );
       } else {
         console.warn('Received deleteMessage event without a valid messageId structure:', message);
       }
     }
     
-    // Notify all subscribers
+    // Normalize the message data structure for consistency
+    let normalizedMessage = message;
+    if (channel === 'deleteMessage') {
+      // Ensure we have a consistent structure for deleteMessage events
+      if (typeof message === 'string') {
+        normalizedMessage = { messageId: message };
+      } else if (message && typeof message === 'object') {
+        const messageId = message.messageId || 
+                         (message.data && message.data.messageId) || 
+                         message._id ||
+                         message.id;
+        
+        if (messageId) {
+          normalizedMessage = { messageId: messageId };
+        }
+      }
+    }
+    
+    // Notify all subscribers with normalized message
     const subs = this.subscribers.get(channel);
     if (subs) {
       console.log(`Broadcasting to ${subs.size} subscribers`);
@@ -111,7 +131,7 @@ class EventBus {
       
       subscribersArray.forEach(callback => {
         try {
-          callback(message);
+          callback(normalizedMessage);
         } catch (error) {
           console.error('Error in subscriber callback:', error);
           

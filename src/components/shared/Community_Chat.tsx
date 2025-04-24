@@ -307,23 +307,44 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                 console.log('SSE: Received deletion event:', data);
                 console.log('SSE: Data structure:', JSON.stringify(data));
                 
-                if (!data.data || typeof data.data.messageId === 'undefined') {
-                  console.error('SSE: Invalid deletion format, data:', data);
+                // More robust data validation with fallback extraction
+                let messageIdToDelete;
+                
+                if (data && data.data) {
+                  // Try to extract messageId from the standard location
+                  messageIdToDelete = data.data.messageId;
+                  
+                  // If it's not there, try alternate paths that might be present
+                  if (messageIdToDelete === undefined) {
+                    messageIdToDelete = data.data._id || data.data.id;
+                  }
+                }
+                
+                // Final fallback directly to the data object if all else fails
+                if (messageIdToDelete === undefined && data) {
+                  messageIdToDelete = data.messageId || data._id || data.id;
+                }
+                
+                if (!messageIdToDelete) {
+                  console.error('SSE: Invalid deletion format, could not extract messageId:', data);
                   return;
                 }
                 
-                const messageIdToDelete = data.data.messageId;
                 console.log('SSE: Removing message with ID:', messageIdToDelete);
                 
                 setMessages(prevMessages => {
                   const beforeCount = prevMessages.length;
-                  const filteredMessages = prevMessages.filter(msg => msg._id !== messageIdToDelete);
+                  // Use the extracted messageId, string coercion for safety
+                  const filteredMessages = prevMessages.filter(msg => msg._id !== messageIdToDelete.toString());
                   const afterCount = filteredMessages.length;
                   
                   console.log(`SSE: Messages before: ${beforeCount}, after: ${afterCount}, removed: ${beforeCount - afterCount}`);
                   
                   // Only update state if we actually removed something
-                  return filteredMessages;
+                  if (beforeCount !== afterCount) {
+                    return filteredMessages;
+                  }
+                  return prevMessages;
                 });
                 break;
                 
@@ -429,6 +450,13 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
   const deleteUserMessage = async (messageId: string) => {
     setIsDeleting(true);
     try {
+      // Clone the current messages and optimistically update the UI
+      const originalMessages = [...messages];
+      const filteredMessages = originalMessages.filter(msg => msg._id !== messageId);
+      
+      // Apply optimistic update immediately
+      setMessages(filteredMessages);
+      
       const response = await fetch('/api/community-chat/delete', {
         method: 'DELETE',
         headers: {
@@ -438,18 +466,18 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
           userId,
           messageId
         })
-      })
+      });
       
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Restore original messages if the server request failed
+        setMessages(originalMessages);
         throw new Error(errorData.error || 'Failed to delete message');
       }
       
-      // Immediately update UI by removing the message from state
-      setMessages(prevMessages => 
-        prevMessages.filter(msg => msg._id !== messageId)
-      );
-      
+      // The message has been deleted on the server and UI is already updated
+      // The SSE will also broadcast this to other clients
       setError(null);
       
     } catch (err:any) {
