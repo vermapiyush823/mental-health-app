@@ -13,7 +13,6 @@ interface Message {
   username: string;
   message: string;
   createdAt: string;
-  isDeleted?: boolean;
 }
 
 interface CommunityChatProps {
@@ -348,29 +347,6 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                   return prevMessages;
                 });
                 break;
-
-              case 'updateMessage':
-                // Handle message updates (for deleted messages)
-                console.log('SSE: Received message update event:', data);
-                
-                if (data.data && data.data.messageId) {
-                  const { messageId, message, isDeleted } = data.data;
-                  
-                  setMessages(prevMessages => {
-                    return prevMessages.map(msg => {
-                      if (msg._id === messageId) {
-                        // Update the message with the new properties
-                        return {
-                          ...msg,
-                          message: message || msg.message,
-                          isDeleted: isDeleted || msg.isDeleted
-                        };
-                      }
-                      return msg;
-                    });
-                  });
-                }
-                break;
                 
               default:
                 console.log('SSE: Unknown event type:', data.type);
@@ -648,24 +624,20 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                   </div>
                   
                   <div className={`p-2 xs:p-3 text-xs xs:text-sm rounded-lg shadow-md ${
-                    msg.isDeleted 
+                    msg.userId === userId 
                       ? isDarkMode 
-                        ? "bg-gray-700/80 text-gray-400 italic" 
-                        : "bg-gray-100 text-gray-500 italic"
-                      : msg.userId === userId 
-                        ? isDarkMode 
-                          ? "bg-gradient-to-r from-purple-600 to-indigo-700 text-white" 
-                          : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white" 
-                        : isDarkMode
-                          ? "bg-gray-800 text-gray-100 border border-gray-700" 
-                          : "bg-white text-gray-800 border border-gray-100"
+                        ? "bg-gradient-to-r from-purple-600 to-indigo-700 text-white" 
+                        : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white" 
+                      : isDarkMode
+                        ? "bg-gray-800 text-gray-100 border border-gray-700" 
+                        : "bg-white text-gray-800 border border-gray-100"
                   }`}>
                     {msg.message}
                   </div>
                 </div>
                 
-                {/* Delete button only for user's own messages that haven't been deleted yet */}
-                {msg.userId === userId && !msg.isDeleted && (
+                {/* Delete button only for user's own messages */}
+                {msg.userId === userId && (
                   <button 
                     onClick={() => {
                       setMessageToDelete(msg._id);

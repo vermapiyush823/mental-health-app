@@ -5,9 +5,6 @@ interface CommunityChat {
     username: string;
     message: string;
     createdAt: Date;
-    isDeleted?: boolean;
-    originalMessage?: string;
-    deletedAt?: Date;
 }
 
 const communityChatSchema = new mongoose.Schema(
@@ -24,18 +21,6 @@ const communityChatSchema = new mongoose.Schema(
             type: String,
             required: [true, "Message is required"],
         },
-        isDeleted: {
-            type: Boolean,
-            default: false
-        },
-        originalMessage: {
-            type: String,
-            default: null
-        },
-        deletedAt: {
-            type: Date,
-            default: null
-        }
     },
     {
         timestamps: true,

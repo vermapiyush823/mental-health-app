@@ -129,20 +129,17 @@ export async function GET(request: NextRequest) {
             recentlyDeletedIds.add(messageId.toString());
           }
 
-          console.log('SSE: Sending message update for ID:', messageId);
+          console.log('SSE: Sending deleteMessage event to client:', messageData);
           
-          // For soft deletes, we send an update event to the client
+          // Use a reliable message format for deletion events
           const message = JSON.stringify({ 
-            type: 'updateMessage', 
-            data: { 
-              messageId: messageId.toString(),
-              message: "This message was deleted",
-              isDeleted: true
-            },
-            timestamp: Date.now() 
+            type: 'deleteMessage', 
+            data: { messageId: messageId.toString() },
+            timestamp: Date.now()
           });
           
-          // Send message update event to the client
+          // Send deletion event multiple times to ensure delivery
+          // First immediate message - only if controller is still active
           if (!safeEnqueue(`data: ${message}\n\n`)) {
             return; // Exit if controller closed
           }
@@ -152,7 +149,7 @@ export async function GET(request: NextRequest) {
             try {
               safeEnqueue(`data: ${message}\n\n`);
             } catch (error) {
-              console.error('Error sending delayed message update event:', error);
+              console.error('Error sending delayed deletion event:', error);
             }
           }, 500);
         } catch (error) {
