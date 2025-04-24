@@ -59,9 +59,49 @@ export async function GET(request: NextRequest) {
       // Subscribe to message deletions from EventBus
       const unsubscribeDelete = eventBus.subscribe('deleteMessage', (data) => {
         try {
-          const messageData = { messageId: data.messageId };
+          // Handle multiple possible data structures for better compatibility
+          let messageData;
+          
+          if (typeof data === 'string') {
+            // If it's just a string ID
+            messageData = { messageId: data };
+          } else if (data && typeof data === 'object') {
+            // Ensure we have a consistent structure regardless of input format
+            const messageId = data.messageId || (data.data && data.data.messageId) || data._id || data.id;
+            
+            if (!messageId) {
+              console.error('SSE: Invalid deletion data format - no messageId found:', data);
+              return;
+            }
+            
+            messageData = { messageId };
+          } else {
+            console.error('SSE: Invalid deletion data format:', data);
+            return;
+          }
+          
           console.log('SSE: Sending deleteMessage event to client:', messageData);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'deleteMessage', data: messageData })}\n\n`));
+          
+          // Use a more reliable message format for deletion events
+          const message = JSON.stringify({ 
+            type: 'deleteMessage', 
+            data: messageData,
+            timestamp: Date.now() // Add timestamp to help prevent caching issues
+          });
+          
+          // Send multiple times to ensure delivery (production reliability)
+          controller.enqueue(encoder.encode(`data: ${message}\n\n`));
+          
+          // Send a duplicate deletion event after a small delay as a backup
+          // This helps in production where network conditions may be unstable
+          setTimeout(() => {
+            try {
+              controller.enqueue(encoder.encode(`data: ${message}\n\n`));
+            } catch (error) {
+              console.error('Error sending delayed deletion event:', error);
+            }
+          }, 500);
+          
         } catch (error) {
           console.error('Error sending deletion event to client:', error);
         }

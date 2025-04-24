@@ -448,15 +448,24 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
 
   // Delete a message (only if it belongs to current user)
   const deleteUserMessage = async (messageId: string) => {
+    if (!messageId) {
+      console.error('No message ID provided for deletion');
+      return;
+    }
+    
     setIsDeleting(true);
     try {
-      // Clone the current messages and optimistically update the UI
+      // 1. Optimistic update - remove message from UI immediately
+      console.log('Optimistically removing message:', messageId);
+      
+      // First, save the current messages for potential rollback
       const originalMessages = [...messages];
-      const filteredMessages = originalMessages.filter(msg => msg._id !== messageId);
       
-      // Apply optimistic update immediately
-      setMessages(filteredMessages);
+      // Update UI optimistically
+      setMessages(prevMessages => prevMessages.filter(msg => msg._id !== messageId));
       
+      // 2. Send deletion request to server
+      console.log('Sending delete request to server for message:', messageId);
       const response = await fetch('/api/community-chat/delete', {
         method: 'DELETE',
         headers: {
@@ -468,19 +477,38 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
         })
       });
       
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        
-        // Restore original messages if the server request failed
+        // Rollback optimistic update if server request failed
+        console.error('Server deletion failed, rolling back:', data.error);
         setMessages(originalMessages);
-        throw new Error(errorData.error || 'Failed to delete message');
+        throw new Error(data.error || 'Failed to delete message');
       }
       
-      // The message has been deleted on the server and UI is already updated
-      // The SSE will also broadcast this to other clients
+      // 3. Force a manual message state update after successful deletion
+      // This ensures the message is removed even if SSE fails to deliver the event
+      console.log('Server confirmed deletion, ensuring message removed from state');
+      setMessages(current => current.filter(msg => msg._id !== messageId));
+      
+      // 4. After a delay, verify message is really gone (for production reliability)
+      setTimeout(() => {
+        setMessages(current => {
+          // Check if the message is still in state somehow
+          const messageStillExists = current.some(msg => msg._id === messageId);
+          
+          if (messageStillExists) {
+            console.log('Message still in state after deletion, forcing removal');
+            // Force remove it if it still exists
+            return current.filter(msg => msg._id !== messageId);
+          }
+          return current;
+        });
+      }, 2000); // Check after 2 seconds as a fallback
+      
       setError(null);
       
-    } catch (err:any) {
+    } catch (err: any) {
       console.error('Error deleting message:', err);
       setError(`Failed to delete message: ${err.message}`);
     } finally {
