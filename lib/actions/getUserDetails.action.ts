@@ -16,3 +16,20 @@ export async function getUserDetails(userId: string) {
         return { success: false, error: `Failed to fetch user details: ${error.message}` };
     }
 }
+
+export async function getUserImageUrl(userId: string) {
+    try {
+        await connectToDatabase();
+        
+        const user = await User.findById(userId).select('image');
+        
+        if (!user) {
+            return { success: false, error: "User not found" };
+        }
+        
+        return { success: true, imageUrl: user.image };
+    } catch (error: any) {
+        console.error('Error fetching user image:', error);
+        return { success: false, error: `Failed to fetch user image: ${error.message}` };
+    }
+}

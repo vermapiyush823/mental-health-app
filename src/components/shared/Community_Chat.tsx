@@ -20,23 +20,58 @@ interface CommunityChatProps {
 }
 
 // Avatar component to display first letter of username
-const UserAvatar = ({ username, isDarkMode }: { username: string; isDarkMode: boolean }) => {
-  // Create a color based on the username
-  const getColorFromUsername = (name: string) => {
-    const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
-      'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'
-    ];
-    const index = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0) % colors.length;
-    return colors[index];
-  };
+const UserAvatar = ({ username, userId, isDarkMode }: { username: string; userId: string; isDarkMode: boolean }) => {
+  // Calculate a consistent avatar color based on username (fallback)
+  const avatarColor = isDarkMode 
+    ? ['bg-blue-700', 'bg-purple-700', 'bg-pink-700', 'bg-indigo-700', 'bg-teal-700'][Math.abs(username.charCodeAt(0)) % 5]
+    : ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'][Math.abs(username.charCodeAt(0)) % 5];
   
-  const avatarColor = getColorFromUsername(username);
-  const initial = username.charAt(0).toUpperCase();
+  // State to store the image URL
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  
+  // Fetch user image URL from our dedicated API only when userId changes
+  useEffect(() => {
+    const fetchUserImage = async () => {
+      try {
+        const response = await fetch('/api/get/user-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.imageUrl) {
+          setImageUrl(data.imageUrl);
+        }
+      } catch (error) {
+        console.error('Error fetching user image:', error);
+        // Continue with fallback avatar if image fetch fails
+      }
+    };
+    
+    if (userId) {
+      fetchUserImage();
+    }
+  }, [userId]); // Only re-run when userId changes
 
   return (
-    <div className={`flex items-center justify-center w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 rounded-full mr-1.5 xs:mr-2 ${avatarColor} flex-shrink-0 shadow-md`}>
-      <span className="text-[10px] xs:text-xs sm:text-sm font-medium text-white">{initial}</span>
+    <div className={`flex items-center justify-center mx-2 w-8 h-8 xs:w-8 xs:h-8 sm:w-8 sm:h-8 rounded-full mr-1.5 xs:mr-2 ${!imageUrl ? avatarColor : ''} flex-shrink-0 shadow-md overflow-hidden`}>
+      {imageUrl ? (
+        <Image 
+          src={imageUrl}
+          alt={username}
+          className="rounded-full object-cover w-full h-full"
+          width={32}
+          height={32}
+        />
+      ) : (
+        <span className="text-xs xs:text-sm text-white font-medium">
+          {username.charAt(0).toUpperCase()}
+        </span>
+      )}
     </div>
   );
 }
@@ -614,7 +649,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
             >
               <div className="flex items-start max-w-[90%] xs:max-w-[85%] group">
                 {msg.userId !== userId && (
-                  <UserAvatar username={msg.username} isDarkMode={isDarkMode} />
+                  <UserAvatar username={msg.username} userId={msg.userId} isDarkMode={isDarkMode} />
                 )}
                 
                 <div className="flex flex-col">
@@ -659,7 +694,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
                 
                 {/* User avatar for user's own messages (right aligned) */}
                 {msg.userId === userId && (
-                  <UserAvatar username={msg.username} isDarkMode={isDarkMode} />
+                  <UserAvatar username={msg.username} userId={msg.userId} isDarkMode={isDarkMode} />
                 )}
               </div>
             </motion.div>

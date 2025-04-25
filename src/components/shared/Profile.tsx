@@ -337,7 +337,7 @@ const Profile = ({userId}:ProfileProps) => {
        initial="hidden"
        animate="visible"
        variants={containerVariants}
-       className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} p-2 sm:p-4 md:p-6`}
+       className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} p-2 my-3 sm:p-4 md:p-6`}
      >
        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
          {/* Main Profile Card */}
@@ -358,7 +358,7 @@ const Profile = ({userId}:ProfileProps) => {
                   <motion.div
                     whileHover={isUploading ? undefined : { scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
-                    className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 overflow-hidden rounded-full border-2 border-purple-300/50 shadow-lg"
+                    className="relative w-40 h-40 sm:w-28 sm:h-28 md:w-32 md:h-32 overflow-hidden rounded-full border-2 border-purple-300/50 shadow-lg"
                   >
                     <img
                       src={newImg}
