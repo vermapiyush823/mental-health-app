@@ -13,7 +13,7 @@ export async function connectToDatabase() {
   }
   try {
     await mongoose.connect(process.env.DATABASE_URL, {
-      dbName: "MentalHealthApp",
+      dbName: "ReVibe",
     });
     isConnected = true;
     console.log("Mongodatabase connected");
