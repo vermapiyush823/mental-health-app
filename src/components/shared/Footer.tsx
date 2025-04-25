@@ -81,8 +81,8 @@ const Footer = () => {
             <Link href="/support" className={`text-sm hover:underline ${isDarkMode ? 'text-gray-300 hover:text-purple-300' : 'text-gray-600 hover:text-indigo-600'}`}>
               Support
             </Link>
-            <Link href="/about" className={`text-sm hover:underline ${isDarkMode ? 'text-gray-300 hover:text-purple-300' : 'text-gray-600 hover:text-indigo-600'}`}>
-              About Us
+            <Link href="/mood-track" className={`text-sm hover:underline ${isDarkMode ? 'text-gray-300 hover:text-purple-300' : 'text-gray-600 hover:text-indigo-600'}`}>
+                Mood Tracker
             </Link>
           </div>
           
