@@ -68,7 +68,7 @@ const Footer = () => {
           </div>
           
           {/* Quick links */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center flex-wrap justify-center space-y-2 space-x-6">
             <Link href="/" className={`text-sm hover:underline ${isDarkMode ? 'text-gray-300 hover:text-purple-300' : 'text-gray-600 hover:text-indigo-600'}`}>
               Home
             </Link>
