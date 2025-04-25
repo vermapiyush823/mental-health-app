@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Revibe - Mental Health App",
+  title: "Revibe",
   description: "A mental health and wellness application",
   icons: {
     icon: [
