@@ -3,7 +3,8 @@ import React, { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
-import Revibe from '/Users/piyush.verma1/mental-health-app/assets/icons/revibe-logo.svg'
+import Revibe from '../../../assets/icons/revibe-logo.svg'
+
 
 const Footer = () => {
   const { resolvedTheme } = useTheme();
@@ -30,7 +31,7 @@ const Footer = () => {
     if (!mounted) {
         return null;
         }
-        
+
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
