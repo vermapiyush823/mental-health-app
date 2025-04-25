@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
-import Revibe from '/Users/piyush.verma1/mental-health-app/assets/icons/revibe-logo.svg'
+import Revibe from '../../../assets/icons/revibe-logo.svg'
 
 interface HeaderProps {
   userId: string;

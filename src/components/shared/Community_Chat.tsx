@@ -562,7 +562,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className={`flex flex-col sm:h-[calc(100vh-140px)] h-[70vh]   ${cardBgClass} gap-y-2 xs:gap-y-4 sm:py-6 sm:px-8 py-2 px-3 xs:px-4 rounded-lg overflow-hidden relative`}
+      className={`flex flex-col h-[calc(100vh-140px)] xs:h-[75vh] sm:h-[80vh] md:h-[81vh] ${cardBgClass} gap-y-2 xs:gap-y-4 sm:py-6 sm:px-8 py-2 px-3 xs:px-4 rounded-lg overflow-hidden relative`}
     >
       {/* Gradient overlay */}
       <div className={gradientOverlay}></div>
