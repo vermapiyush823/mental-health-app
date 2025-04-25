@@ -247,7 +247,7 @@ const Resource = ({
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        className="max-w-5xl mx-auto"
+        className="max-w-5xl mx-auto mb-10"
       >
         <motion.article 
           variants={itemVariants}
