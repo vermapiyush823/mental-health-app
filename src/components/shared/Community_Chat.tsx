@@ -51,6 +51,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
   const [error, setError] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
   
   // Add state for message deletion confirmation
@@ -536,7 +537,9 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
 
   // Auto-scroll to bottom when new messages come in
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }
 
   // Scroll to bottom when messages change
@@ -559,7 +562,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className={`flex flex-col h-[calc(100vh-120px)] xs:h-[80vh] sm:h-[81.9vh] ${cardBgClass} gap-y-2 xs:gap-y-4 sm:py-6 sm:px-8 py-2 px-3 xs:px-4 rounded-lg overflow-hidden relative`}
+      className={`flex flex-col h-[calc(100vh-140px)] xs:h-[75vh] sm:h-[80vh] md:h-[81vh] ${cardBgClass} gap-y-2 xs:gap-y-4 sm:py-6 sm:px-8 py-2 px-3 xs:px-4 rounded-lg overflow-hidden relative`}
     >
       {/* Gradient overlay */}
       <div className={gradientOverlay}></div>
@@ -587,6 +590,7 @@ const Community_Chat = ({ userId }: CommunityChatProps) => {
 
       {/* Messages Container */}
       <div 
+        ref={messagesContainerRef}
         className={`flex-1 overflow-y-auto p-2 xs:p-4 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80 border border-gray-200'} space-y-3 xs:space-y-4 rounded-md scroll-smooth z-10`}
       >
         {loadingMessages ? (

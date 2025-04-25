@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Header from "@/components/shared/Header";
+import Footer from "@/components/shared/Footer";
 import { getUserId } from "../../../lib/auth";
 
 export default async function Layout({
@@ -25,6 +26,7 @@ export default async function Layout({
       <section className="">
         <div>{children}</div>
       </section>
+      <Footer />
     </main>
   );
 }

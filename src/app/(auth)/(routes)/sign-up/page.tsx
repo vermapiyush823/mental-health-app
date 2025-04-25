@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import ThemeSwitcher from "@/components/shared/ThemeSwitcher";
+import Revibe from "../../../../../assets/icons/revibe-logo.svg";
 
 const SignUpPage = () => {
   const [name, setFullName] = useState("");
@@ -131,19 +132,31 @@ const SignUpPage = () => {
         variants={containerVariants}
         className={`auth-content relative z-10 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} p-8 rounded-2xl shadow-2xl w-full max-w-lg mx-6 backdrop-blur-md bg-opacity-80 dark:bg-opacity-30 border border-white/10`}
       >
-        <motion.div variants={itemVariants} className="flex justify-between mb-6">
+          <div className="absolute top-4 right-4">
+          <ThemeSwitcher />
+        </div>
+        <motion.div variants={itemVariants} className="flex justify-center mb-6">
           <div className={`relative text-3xl font-extrabold ${isDarkMode ? 'text-purple-300' : 'text-indigo-600'} tracking-wider`}>
+           
             <motion.span
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className="relative z-10"
+              className="relative z-10 flex items-center"
             >
-              MindWell
+               <motion.img
+                src={Revibe.src}
+                alt="Logo"
+                className={`h-12 w-12 rounded-full mr-1 shadow-md`}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              />
+              ReVibe
               <span className={`${isDarkMode ? 'text-pink-300' : 'text-pink-500'}`}>.</span>
             </motion.span>
+            <div className={`absolute -bottom-1 left-0 h-1 w-full ${isDarkMode ? 'bg-purple-500' : 'bg-indigo-400'} transform scale-x-0 origin-left`}></div>
           </div>
-          <ThemeSwitcher />
         </motion.div>
 
         <motion.h2 variants={itemVariants} className="text-xl font-medium text-center mb-6">Create Your Account</motion.h2>

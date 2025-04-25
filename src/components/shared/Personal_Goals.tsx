@@ -246,7 +246,7 @@ const PersonalGoals = ({ userId }: ProfileProps) => {
         className="flex items-center justify-between z-10"
       >
         <h1 className="text-lg font-bold tracking-wide">
-          <span className={isDarkMode ? 'text-white' : 'text-black'}>
+          <span className={'text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500'}>
             Personal Goals
           </span>
         </h1>

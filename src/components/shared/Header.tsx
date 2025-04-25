@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
+import Revibe from '/Users/piyush.verma1/mental-health-app/assets/icons/revibe-logo.svg'
 
 interface HeaderProps {
   userId: string;
@@ -157,24 +158,24 @@ const Header = ({ userId }: HeaderProps) => {
           {/* Logo */}
           <Link href="/">
             <div className={`flex items-center relative`}>
+           
               <motion.span 
-                className={`text-xl font-extrabold ${
+                className={`text-xl font-extrabold flex items-center ${
                   isDarkMode ? 'text-purple-300' : 'text-indigo-600'
                 } tracking-wide`}
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 400 }}
               >
-                MindWell
+                   <motion.img
+                src={Revibe.src}
+                alt="Logo"
+                className={`h-12 w-12 mr-1 rounded-full shadow-md`}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              />
+                ReVibe
                 <span className={isDarkMode ? 'text-pink-300' : 'text-pink-500'}>.</span>
-                <motion.div 
-                  className={`absolute -bottom-1 left-0 h-0.5 w-full ${
-                    isDarkMode ? 'bg-purple-500' : 'bg-indigo-400'
-                  }`}
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
-                  style={{ transformOrigin: "left" }}
-                ></motion.div>
               </motion.span>
             </div>
           </Link>
