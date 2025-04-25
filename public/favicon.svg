@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#gradient)" />
+  
+  <!-- Brain Lines representing mental health -->
+  <path d="M60,100 Q80,60 100,100 Q120,140 140,100" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round" />
+  <path d="M60,80 Q80,120 100,80 Q120,40 140,80" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round" />
+  
+  <!-- Wave/Vibe element -->
+  <path d="M40,120 Q70,100 100,120 Q130,140 160,120" stroke="#ffffff" stroke-width="8" fill="none" stroke-linecap="round" />
+  
+  <!-- Gradient Definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6d28d9;stop-opacity:1" /> <!-- Purple (indigo-700) -->
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" /> <!-- Purple (violet-500) -->
+    </linearGradient>
+  </defs>
+</svg>
