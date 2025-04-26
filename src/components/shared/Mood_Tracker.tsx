@@ -18,9 +18,12 @@ interface MoodData {
     water_intake: string;
     people_met: string;
     exercise: string;
-    sleep: string;
-    screen_time: string;
-    outdoor_time: string;
+    sleepHours?: string;
+    sleepMinutes?: string;
+    screenHours?: string;
+    screenMinutes?: string;
+    outdoorHours?: string;
+    outdoorMinutes?: string;
     stress_level: string;
     food_quality: string;
 }
@@ -40,8 +43,7 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [numericFields] = useState<string[]>([
-        'water_intake', 'people_met', 'exercise', 
-        'sleep', 'screen_time', 'outdoor_time'
+        'water_intake', 'people_met', 'exercise'
     ]);
     const [valueError, setValueError] = useState<Array<{
         type: string;
@@ -120,9 +122,12 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
         water_intake: '',
         people_met: '',
         exercise: '',
-        sleep: '',
-        screen_time: '',
-        outdoor_time: '',
+        sleepHours: '',
+        sleepMinutes: '',
+        screenHours: '',
+        screenMinutes: '',
+        outdoorHours: '',
+        outdoorMinutes: '',
         stress_level: 'Medium',
         food_quality: 'Moderate'
     });
@@ -203,27 +208,36 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                 isValid = false;
             }
         } else if (step === 2) {
-            if (!moodData.sleep.trim()) {
+            if (!moodData.sleepHours?.trim() && !moodData.sleepMinutes?.trim()) {
                 newErrors.sleep = "Please enter your sleep duration";
                 isValid = false;
-            } else if (!/^\d*\.?\d*$/.test(moodData.sleep)) {
-                newErrors.sleep = "Please enter a valid number";
+            } else if (
+                (moodData.sleepHours && !/^\d+$/.test(moodData.sleepHours)) ||
+                (moodData.sleepMinutes && !/^\d+$/.test(moodData.sleepMinutes))
+            ) {
+                newErrors.sleep = "Please enter valid numbers for hours and minutes";
                 isValid = false;
             }
             
-            if (!moodData.screen_time.trim()) {
+            if (!moodData.screenHours?.trim() && !moodData.screenMinutes?.trim()) {
                 newErrors.screen_time = "Please enter your screen time";
                 isValid = false;
-            } else if (!/^\d*\.?\d*$/.test(moodData.screen_time)) {
-                newErrors.screen_time = "Please enter a valid number";
+            } else if (
+                (moodData.screenHours && !/^\d+$/.test(moodData.screenHours)) ||
+                (moodData.screenMinutes && !/^\d+$/.test(moodData.screenMinutes))
+            ) {
+                newErrors.screen_time = "Please enter valid numbers for hours and minutes";
                 isValid = false;
             }
             
-            if (!moodData.outdoor_time.trim()) {
+            if (!moodData.outdoorHours?.trim() && !moodData.outdoorMinutes?.trim()) {
                 newErrors.outdoor_time = "Please enter your outdoor time";
                 isValid = false;
-            } else if (!/^\d*\.?\d*$/.test(moodData.outdoor_time)) {
-                newErrors.outdoor_time = "Please enter a valid number";
+            } else if (
+                (moodData.outdoorHours && !/^\d+$/.test(moodData.outdoorHours)) ||
+                (moodData.outdoorMinutes && !/^\d+$/.test(moodData.outdoorMinutes))
+            ) {
+                newErrors.outdoor_time = "Please enter valid numbers for hours and minutes";
                 isValid = false;
             }
         }
@@ -270,9 +284,9 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
             water_intake: parseFloat(moodData.water_intake) || 0,
             people_met: parseInt(moodData.people_met) || 0,
             exercise: parseInt(moodData.exercise) || 0,
-            sleep: parseFloat(moodData.sleep) || 0,
-            screen_time: parseFloat(moodData.screen_time) || 0,
-            outdoor_time: parseFloat(moodData.outdoor_time) || 0,
+            sleep: (parseInt(moodData.sleepHours || '0') || 0) + (parseInt(moodData.sleepMinutes || '0') || 0) / 60,
+            screen_time: (parseInt(moodData.screenHours || '0') || 0) + (parseInt(moodData.screenMinutes || '0') || 0) / 60,
+            outdoor_time: (parseInt(moodData.outdoorHours || '0') || 0) + (parseInt(moodData.outdoorMinutes || '0') || 0) / 60,
             stress_level: moodData.stress_level,
             food_quality: moodData.food_quality
         };
@@ -433,6 +447,41 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
             setErrors({
                 ...errors,
                 [name]: ''
+            });
+        }
+    };
+
+    const handleSleepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        const sanitizedValue = value.replace(/[^\d]/g, ''); // Only allow digits
+        setMoodData({
+            ...moodData,
+            [name]: sanitizedValue
+        });
+
+        // Clear error for sleep when user types
+        if (errors.sleep) {
+            setErrors({
+                ...errors,
+                sleep: ''
+            });
+        }
+    };
+
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        const sanitizedValue = value.replace(/[^\d]/g, ''); // Only allow digits
+        setMoodData({
+            ...moodData,
+            [name]: sanitizedValue
+        });
+
+        // Clear error for screen time or outdoor time when user types
+        if (errors.screen_time || errors.outdoor_time) {
+            setErrors({
+                ...errors,
+                screen_time: '',
+                outdoor_time: ''
             });
         }
     };
@@ -722,25 +771,44 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                                     <label htmlFor="sleep" className={`block text-md font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
                                         Sleep Duration <span className="text-red-500">*</span>
                                     </label>
-                                    <div className={`relative group ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            id="sleep"
-                                            name="sleep"
-                                            className={`border rounded-lg p-3 pr-12 text-sm w-full focus:outline-none focus:ring-2 ${
-                                                isDarkMode 
-                                                    ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
-                                                    : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
-                                            } transition-all duration-300`}
-                                            placeholder="Hours of sleep"
-                                            value={moodData.sleep}
-                                            onChange={handleInputChange}
-                                        />
-                                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-indigo-500">
-                                            {FormIcons.sleep}
-                                        </span>
-                                        <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-indigo-500 to-purple-500 group-focus-within:w-full transition-all duration-500"></div>
+                                    <div className="flex space-x-2">
+                                        <div className={`relative group flex-1 ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                id="sleepHours"
+                                                name="sleepHours"
+                                                className={`border rounded-lg p-3 pr-12 text-sm w-full focus:outline-none focus:ring-2 ${
+                                                    isDarkMode 
+                                                        ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
+                                                        : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
+                                                } transition-all duration-300`}
+                                                placeholder="Hours"
+                                                value={moodData.sleepHours || ''}
+                                                onChange={handleSleepChange}
+                                            />
+                                            <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-indigo-500 to-purple-500 group-focus-within:w-full transition-all duration-500"></div>
+                                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">hrs</div>
+                                        </div>
+                                        
+                                        <div className={`relative group flex-1 ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                id="sleepMinutes"
+                                                name="sleepMinutes"
+                                                className={`border rounded-lg p-3 pr-12 text-sm w-full focus:outline-none focus:ring-2 ${
+                                                    isDarkMode 
+                                                        ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
+                                                        : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
+                                                } transition-all duration-300`}
+                                                placeholder="Minutes"
+                                                value={moodData.sleepMinutes || ''}
+                                                onChange={handleSleepChange}
+                                            />
+                                            <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-indigo-500 to-purple-500 group-focus-within:w-full transition-all duration-500"></div>
+                                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">min</div>
+                                        </div>
                                     </div>
                                     {errors.sleep && (
                                         <p 
@@ -757,32 +825,49 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                                         <label htmlFor="screen_time" className={`block text-md font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
                                             Screen Time <span className="text-red-500">*</span>
                                         </label>
-                                        <div className={`relative group ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
-                                            <input
-                                                type="text"
-                                                inputMode="decimal"
-                                                id="screen_time"
-                                                name="screen_time"
-                                                className={`border rounded-lg p-3 pr-12 text-sm w-full focus:outline-none focus:ring-2 ${
-                                                    isDarkMode 
-                                                        ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
-                                                        : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
-                                                } transition-all duration-300`}
-                                                placeholder="Hours"
-                                                value={moodData.screen_time}
-                                                onChange={handleInputChange}
-                                            />
-                                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500">
-                                                {FormIcons.screen}
-                                            </span>
-                                            <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-blue-500 to-purple-500 group-focus-within:w-full transition-all duration-500"></div>
+                                        <div className="flex space-x-2">
+                                            <div className={`relative group flex-1 ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+                                                <input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    id="screenHours"
+                                                    name="screenHours"
+                                                    className={`border rounded-lg p-3 pr-12 text-sm w-full focus:outline-none focus:ring-2 ${
+                                                        isDarkMode 
+                                                            ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
+                                                            : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
+                                                    } transition-all duration-300`}
+                                                    placeholder="Hours"
+                                                    value={moodData.screenHours || ''}
+                                                    onChange={handleTimeChange}
+                                                />
+                                                <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-blue-500 to-purple-500 group-focus-within:w-full transition-all duration-500"></div>
+                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">hrs</div>
+                                            </div>
+                                            
+                                            <div className={`relative group flex-1 ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+                                                <input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    id="screenMinutes"
+                                                    name="screenMinutes"
+                                                    className={`border rounded-lg p-3 pr-12 text-sm w-full focus:outline-none focus:ring-2 ${
+                                                        isDarkMode 
+                                                            ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
+                                                            : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
+                                                    } transition-all duration-300`}
+                                                    placeholder="Minutes"
+                                                    value={moodData.screenMinutes || ''}
+                                                    onChange={handleTimeChange}
+                                                />
+                                                <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-blue-500 to-purple-500 group-focus-within:w-full transition-all duration-500"></div>
+                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">min</div>
+                                            </div>
                                         </div>
                                         {errors.screen_time && (
-                                            <p 
-                                            className="text-red-500 text-xs mt-1 error-message"
-                                        >
-                                            {errors.screen_time}
-                                        </p>
+                                            <p className="text-red-500 text-xs mt-1 error-message">
+                                                {errors.screen_time}
+                                            </p>
                                         )}
                                     </div>
                                     
@@ -790,25 +875,44 @@ const Mood_Tracker = ({ userId }: MoodTrackerProps) => {
                                         <label htmlFor="outdoor_time" className={`block text-md font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
                                             Outdoor Time <span className="text-red-500">*</span>
                                         </label>
-                                        <div className={`relative group ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
-                                            <input
-                                                type="text"
-                                                inputMode="decimal"
-                                                id="outdoor_time"
-                                                name="outdoor_time"
-                                                className={`border rounded-lg p-3 pr-12 text-sm w-full focus:outline-none focus:ring-2 ${
-                                                    isDarkMode 
-                                                        ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
-                                                        : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
-                                                } transition-all duration-300`}
-                                                placeholder="Hours"
-                                                value={moodData.outdoor_time}
-                                                onChange={handleInputChange}
-                                            />
-                                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500">
-                                                {FormIcons.outdoor}
-                                            </span>
-                                            <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-green-500 to-emerald-500 group-focus-within:w-full transition-all duration-500"></div>
+                                        <div className="flex space-x-2">
+                                            <div className={`relative group flex-1 ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+                                                <input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    id="outdoorHours"
+                                                    name="outdoorHours"
+                                                    className={`border rounded-lg p-3 pr-12 text-sm w-full focus:outline-none focus:ring-2 ${
+                                                        isDarkMode 
+                                                            ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
+                                                            : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
+                                                    } transition-all duration-300`}
+                                                    placeholder="Hours"
+                                                    value={moodData.outdoorHours || ''}
+                                                    onChange={handleTimeChange}
+                                                />
+                                                <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-green-500 to-emerald-500 group-focus-within:w-full transition-all duration-500"></div>
+                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">hrs</div>
+                                            </div>
+                                            
+                                            <div className={`relative group flex-1 ${isDarkMode ? 'focus-within:ring-purple-500' : 'focus-within:ring-indigo-500'}`}>
+                                                <input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    id="outdoorMinutes"
+                                                    name="outdoorMinutes"
+                                                    className={`border rounded-lg p-3 pr-12 text-sm w-full focus:outline-none focus:ring-2 ${
+                                                        isDarkMode 
+                                                            ? 'bg-gray-800 border-gray-600 focus:border-purple-400 text-white' 
+                                                            : 'bg-white/90 border-gray-300 focus:border-indigo-400 text-gray-900'
+                                                    } transition-all duration-300`}
+                                                    placeholder="Minutes"
+                                                    value={moodData.outdoorMinutes || ''}
+                                                    onChange={handleTimeChange}
+                                                />
+                                                <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-green-500 to-emerald-500 group-focus-within:w-full transition-all duration-500"></div>
+                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">min</div>
+                                            </div>
                                         </div>
                                         {errors.outdoor_time && (
                                             <p 
