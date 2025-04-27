@@ -51,7 +51,7 @@ const SignUpPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        setError(errorData.message || "Something went wrong");
+        setError(errorData.error || "Something went wrong");
         setIsLoading(false);
         return;
       }

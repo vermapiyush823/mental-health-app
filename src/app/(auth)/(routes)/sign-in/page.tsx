@@ -39,7 +39,7 @@ const SignInPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        setError(errorData.message || "Invalid email or password");
+        setError(errorData.error || "Invalid email or password");
         setIsLoading(false);
         return;
       }
