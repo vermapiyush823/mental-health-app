@@ -132,7 +132,7 @@ const ResourcesList = ({ userId }: ResourcesListProps) => {
             isDarkMode ? 'text-purple-300' : 'text-indigo-700'
           }`}>Mental Health Resources</h1>
           
-          {userId && (
+          {userId==='680c2a2fae30ecf1b499d8cc' && (
             <motion.div
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}

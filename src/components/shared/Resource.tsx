@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 interface ResourceData {
   title: string;
   imageUrl: string;
+  description: string;
   sections: Array<{
     heading: string;
     description?: string;
@@ -35,6 +36,7 @@ interface ResourceProps extends ResourceData {
 const Resource = ({
   title,
   imageUrl,
+  description,
   sections,
   relatedArticles = [],
   resourceId,
@@ -59,9 +61,10 @@ const Resource = ({
 
   useEffect(() => {
     if (userId && resourceId) {
-      // Set initial bookmark state based on bookmarkedBy prop
       setIsBookmarked(bookmarkedBy.includes(userId));
-      
+      console.log(description);
+      console.log(bookmarkedBy);
+      console.log(title);
       // Also fetch latest status from API
       const checkBookmarkStatus = async () => {
         try {
@@ -305,6 +308,18 @@ const Resource = ({
               ))}
             </div>
           </motion.div>
+          
+          {/* Description */} 
+          <motion.p 
+            variants={itemVariants}
+            className={`${
+              isDarkMode 
+                ? 'text-gray-300' 
+                : 'text-gray-700'
+            } mb-6 leading-relaxed transition-colors duration-300`}
+          >
+            {description}
+          </motion.p>
 
           {/* Cover Image */}
           <motion.div

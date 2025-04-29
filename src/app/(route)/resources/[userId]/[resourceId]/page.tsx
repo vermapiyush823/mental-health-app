@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation';
 interface ResourceData {
   title: string;
   imageUrl: string;
+  description: string;
   sections: Array<{
     heading: string;
     description?: string;
@@ -78,6 +79,7 @@ const ResourcePage = () => {
           category={resourceData.category}
           tags={resourceData.tags}
           userId={userId}
+          description={resourceData.description}
           bookmarkedBy={resourceData.bookmarkedBy}
           />
       )}
