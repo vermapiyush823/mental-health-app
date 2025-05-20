@@ -3,7 +3,7 @@ import React, { useEffect } from 'react'
 import { useState } from 'react';
 import { useTheme } from 'next-themes'
 import { motion, AnimatePresence } from 'framer-motion'
-import { PencilSquareIcon, CheckIcon, XMarkIcon, ArrowUpTrayIcon, CameraIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, CheckIcon, XMarkIcon, ArrowUpTrayIcon, CameraIcon, CheckBadgeIcon } from '@heroicons/react/24/outline'
 interface ProfileProps {
     userId: string;
 }
@@ -523,14 +523,25 @@ const Profile = ({userId}:ProfileProps) => {
                          {loading ? (
                            <div className={`animate-pulse h-5 sm:h-6 ${pulseClass} rounded-md w-3/4`}></div>
                          ) : enableEdit ? (
-                           <input
-                             type="email"
-                             value={email}
-                             onChange={(e) => setEmail(e.target.value)}
-                             className={`${inputClass} p-1.5 sm:p-2 rounded-md w-full outline-none text-sm sm:text-base`}
-                           />
+                           <div className="relative w-full">
+                             <input
+                               type="email"
+                               value={email}
+                               disabled={true}
+                               onChange={(e) => setEmail(e.target.value)}
+                               className={`${inputClass} cursor-not-allowed p-1.5 sm:p-2 pl-3 pr-10 rounded-md w-full outline-none text-sm sm:text-base`}
+                             />
+                             <span className="absolute right-3 top-1/2 transform -translate-y-1/2" title="Verified email - cannot be changed">
+                               <CheckBadgeIcon className={`w-5 h-5 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
+                             </span>
+                           </div>
                          ) : (
-                           <div className={`break-words overflow-hidden ${subTextClass}`}>{email}</div>
+                           <div className={`break-words overflow-hidden ${subTextClass} flex items-center gap-2`}>
+                             {email}
+                             <span title="Verified email">
+                               <CheckBadgeIcon className={`w-5 h-5 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
+                             </span>
+                           </div>
                          )}
                        </td>
                      </tr>

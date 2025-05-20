@@ -1,18 +1,5 @@
 import Redis from 'ioredis';
 
-/**
- * Redis Setup Instructions:
- * 
- * For local development:
- * 1. Install Redis locally: 
- *    - macOS: `brew install redis` then `brew services start redis`
- *    - Windows: Use Redis Windows port or Docker
- * 2. Set REDIS_URL in your .env file: 
- *    REDIS_URL=redis://localhost:6379
- * 
- * For production:
- * - Set REDIS_URL to your Railway or other Redis provider URL
- */
 
 // Define Redis channels to prevent typos
 export const REDIS_CHANNELS = {
@@ -43,6 +30,7 @@ function createRedisClient(): Redis {
   const options = {
     enableReadyCheck: true,
     maxRetriesPerRequest: isLocalhost ? 2 : 3,
+    password: process.env.REDIS_PASSWORD, // Use the password directly from env var
     retryStrategy(times: number) {
       const delay = Math.min(times * 50, 2000);
       return delay;
