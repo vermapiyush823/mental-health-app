@@ -19,14 +19,14 @@ export default async function Layout({
   }
 
   return (
-    <main className="">
+    <div className="flex flex-col min-h-screen">
       <Header 
         userId={userId}
       />
-      <section className="">
-        <div>{children}</div>
-      </section>
+      <main className="flex-1">
+        {children}
+      </main>
       <Footer />
-    </main>
+    </div>
   );
 }

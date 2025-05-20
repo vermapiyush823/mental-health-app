@@ -140,14 +140,36 @@ const Profile = ({userId}:ProfileProps) => {
                 
                 const data = await response.json();
                 console.log("Profile picture updated successfully", data.url);
+                
+                // Update with new image from server and clear the selected image
+                if (data.url && data.url.url) {
+                    const newImageUrl = data.url.url;
+                    setNewImg(newImageUrl);
+                    
+                    // Store in localStorage for persistence across page reloads
+                    try {
+                        localStorage.setItem('userProfileImage', newImageUrl);
+                    } catch (error) {
+                        console.error("Error storing profile image in localStorage:", error);
+                    }
+                    
+                    // Dispatch custom event to notify Header component
+                    const event = new CustomEvent('profile-image-updated', {
+                        detail: { imageUrl: newImageUrl }
+                    });
+                    window.dispatchEvent(event);
+                    
+                    // Revoke the object URL to avoid memory leaks
+                    if (selectedImage) URL.revokeObjectURL(URL.createObjectURL(selectedImage));
+                    setSelectedImage(null);
+                }
+                
                 setNewImgUpdated(true);
                 setTimeout(() => {
                     setNewImgUpdated(false);
                     setIsUploading(false);
                     setUploadProgress(0);
                 }, 1500);
-
-                setNewImg(data.url.url); // Update with new image from server
             } else {
                 setIsUploading(false);
                 setUploadProgress(0);

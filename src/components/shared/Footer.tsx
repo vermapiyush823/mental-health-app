@@ -47,7 +47,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className={`w-full py-8 px-4 mt-auto border-t transition-colors duration-300 ${
+    <footer className={`w-full py-8 px-4 border-t mt-auto transition-colors duration-300 ${
       isDarkMode 
         ? 'bg-gray-800 border-gray-700 text-gray-200' 
         : 'bg-gray-50 border-gray-200 text-gray-800'
