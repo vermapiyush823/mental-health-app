@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 
-const genAI = new GoogleGenerativeAI("AIzaSyBdzw6R-jZs5S7x3mUBTfzBl7gl3Ld-uNA"); 
+const genAI = new GoogleGenerativeAI("AIzaSyBlFmpcrqV7t0a1Cl_ob9whNPJFXkbjwMg"); 
 interface ChatbotProps {
   userId: string;
 }
