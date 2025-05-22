@@ -323,7 +323,7 @@ const fetchUserDetails = async () => {
     setIsTyping(true);
     
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
       
       // Format mood data for better readability by the AI based on the actual response format
       const formattedMoodData = moodData && moodData.length > 0 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
  import { signIn } from "../../../../../lib/actions/auth/auth.actions";
+import Ai_insights from "@/components/shared/Ai_insights";
  
  export async function POST(req: NextRequest) {
    try {
@@ -45,3 +46,11 @@ import { NextRequest, NextResponse } from "next/server";
      );
    }
  }
+
+
+
+
+
+
+
+// Form -> req -> api -> call server action -> server action return some data-> api return to client as response -> client render the data
